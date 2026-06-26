@@ -54,6 +54,58 @@ Current health model reports:
 - Redis readiness
 - migration currency
 
+## Tenant isolation verification
+
+Executable tenant-safety checks are represented in:
+
+- `services/api/src/runtime/operations-baseline.ts`
+
+The baseline verification set covers:
+
+- cross-tenant conversation participant joins
+- membership-to-office tenant alignment
+- orphaned or mismatched audit-event tenant references
+
+Any non-zero finding should be treated as a release-blocking anomaly until containment and root-cause analysis are complete.
+
+## Monitoring and alerting
+
+The initial operational alert catalog is represented in:
+
+- `services/api/src/runtime/operations-baseline.ts`
+
+Baseline alerts cover:
+
+- tenant isolation anomalies
+- degraded runtime health
+- audit write failures
+- failed backup jobs
+- repeated governed recovery failures
+- unexpected support elevation activation
+
+## Backup and restore
+
+The backup and restore operational baseline is represented in:
+
+- `services/api/src/runtime/operations-baseline.ts`
+
+Required operating expectations:
+
+1. Run encrypted database backups on a fixed schedule.
+2. Keep object-storage version manifests aligned to backup identifiers.
+3. Rehearse point-in-time restore on a non-production environment every release cycle.
+4. Run tenant-isolation verification checks before allowing restored environments to serve traffic.
+
+## Operational runbooks
+
+The first-release operational runbooks cover:
+
+- tenant isolation incident response
+- governed recovery escalation validation
+- explicit support-elevation handling
+
+These runbooks must remain aligned with the rules already encoded in the audit, recovery, and restricted-access slices.
+
 ## Secret handling assumptions
 
 - Never commit real credentials.
