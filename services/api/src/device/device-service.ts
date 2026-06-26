@@ -94,6 +94,17 @@ export class InMemorySessionRepository {
       .filter((session) => session.deviceId === deviceId)
       .map((session) => cloneAuthSessionRecord(session));
   }
+
+  async listByTenantAndUser(
+    tenantId: string,
+    userId: string,
+  ): Promise<AuthSessionRecord[]> {
+    return Array.from(this.sessions.values())
+      .filter(
+        (session) => session.tenantId === tenantId && session.userId === userId,
+      )
+      .map((session) => cloneAuthSessionRecord(session));
+  }
 }
 
 type TenancyRepository = Pick<
@@ -112,7 +123,7 @@ type DeviceRepository = Pick<
 
 type SessionRepository = Pick<
   InMemorySessionRepository,
-  'create' | 'save' | 'listByDevice'
+  'create' | 'save' | 'listByDevice' | 'listByTenantAndUser'
 >;
 
 type EnrollDeviceInput = {
@@ -185,6 +196,39 @@ export class SessionRegistryService {
 
   async listSessionsByDevice(deviceId: string): Promise<AuthSessionRecord[]> {
     return this.repository.listByDevice(deviceId);
+  }
+
+  async revokeUserSessions(
+    tenantId: string,
+    userId: string,
+    reason: string = 'guest_kill_switch',
+  ): Promise<number> {
+    const sessions = await this.repository.listByTenantAndUser(tenantId, userId);
+    const revokedAt = this.clock.now().toISOString();
+    let revokedCount = 0;
+
+    for (const session of sessions) {
+      if (session.status === 'revoked') {
+        continue;
+      }
+
+      revokedCount += 1;
+      await this.repository.save({
+        ...session,
+        status: 'revoked',
+        revokedAt,
+        revocationReason: reason,
+      });
+    }
+
+    return revokedCount;
+  }
+
+  async listSessionsByUser(
+    tenantId: string,
+    userId: string,
+  ): Promise<AuthSessionRecord[]> {
+    return this.repository.listByTenantAndUser(tenantId, userId);
   }
 }
 

@@ -80,11 +80,24 @@ export class InMemoryRealtimeSubscriptionRepository {
       .filter((subscription) => subscription.connectionId === connectionId)
       .map((subscription) => ({ ...subscription }));
   }
+
+  async deleteByTenantAndUser(tenantId: string, userId: string): Promise<number> {
+    let deletedCount = 0;
+
+    for (const [id, subscription] of this.subscriptions.entries()) {
+      if (subscription.tenantId === tenantId && subscription.userId === userId) {
+        this.subscriptions.delete(id);
+        deletedCount += 1;
+      }
+    }
+
+    return deletedCount;
+  }
 }
 
 type SubscriptionRepository = Pick<
   InMemoryRealtimeSubscriptionRepository,
-  'create' | 'listByConversation' | 'listByConnection'
+  'create' | 'listByConversation' | 'listByConnection' | 'deleteByTenantAndUser'
 >;
 
 export class RealtimeGatewayService {
@@ -187,6 +200,13 @@ export class RealtimeGatewayService {
       connectionId: input.connectionId,
       subscribedConversationIds,
     };
+  }
+
+  async invalidateUserSubscriptions(input: {
+    tenantId: string;
+    userId: string;
+  }): Promise<number> {
+    return this.repository.deleteByTenantAndUser(input.tenantId, input.userId);
   }
 
   private async publish(

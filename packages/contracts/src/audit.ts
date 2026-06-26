@@ -13,6 +13,7 @@ export const auditEventTypes = [
   'guest.identity_created',
   'guest.scope_granted',
   'guest.scope_revoked',
+  'guest.kill_switch_activated',
   'file.upload_intent_created',
   'file.attachment_finalized',
   'file.metadata_viewed',

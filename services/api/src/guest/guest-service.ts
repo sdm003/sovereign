@@ -8,6 +8,8 @@ import type {
   GuestDirectoryEntry,
   GuestIdentity,
   GuestScope,
+  KillGuestAccessRequest,
+  KillGuestAccessResult,
   Membership,
   RevokeGuestScopeRequest,
 } from '@sovereign/contracts';
@@ -33,6 +35,29 @@ type ConversationRepository = Pick<
   InMemoryConversationRepository,
   'getConversation'
 >;
+
+type GuestSessionInvalidator = {
+  revokeUserSessions: (
+    tenantId: string,
+    userId: string,
+    reason?: string,
+  ) => Promise<number>;
+};
+
+type GuestRealtimeInvalidator = {
+  invalidateUserSubscriptions: (input: {
+    tenantId: string;
+    userId: string;
+  }) => Promise<number>;
+};
+
+const noopSessionInvalidator: GuestSessionInvalidator = {
+  revokeUserSessions: async () => 0,
+};
+
+const noopRealtimeInvalidator: GuestRealtimeInvalidator = {
+  invalidateUserSubscriptions: async () => 0,
+};
 
 export class GuestGovernanceError extends Error {
   constructor(
@@ -114,6 +139,12 @@ export class InMemoryGuestAccessRepository {
       )
       .map((scope) => freezeGuestScope(cloneGuestScope(scope)));
   }
+
+  async saveScopes(scopes: GuestScope[]): Promise<void> {
+    for (const scope of scopes) {
+      this.scopes.set(scope.id, cloneGuestScope(scope));
+    }
+  }
 }
 
 type GuestRepository = Pick<
@@ -122,6 +153,7 @@ type GuestRepository = Pick<
   | 'findGuestIdentityByTenantAndUser'
   | 'listGuestIdentitiesByTenant'
   | 'saveScope'
+  | 'saveScopes'
   | 'findActiveScope'
   | 'listActiveScopesForGuest'
 >;
@@ -133,6 +165,8 @@ export class GuestAccessService {
     private readonly conversationRepository: ConversationRepository,
     private readonly auditService: Pick<AuditEventService, 'writeEvent'>,
     private readonly clock: Clock = defaultClock,
+    private readonly sessionInvalidator: GuestSessionInvalidator = noopSessionInvalidator,
+    private readonly realtimeInvalidator: GuestRealtimeInvalidator = noopRealtimeInvalidator,
   ) {}
 
   async createGuestIdentity(
@@ -314,6 +348,88 @@ export class GuestAccessService {
     return scopes.map((scope) => scope.conversationId);
   }
 
+  async killGuestAccess(
+    input: KillGuestAccessRequest,
+  ): Promise<KillGuestAccessResult> {
+    await this.requireAdminMembership(input.tenantId, input.actorUserId);
+    const identity = await this.requireGuestIdentity(
+      input.tenantId,
+      input.guestUserId,
+    );
+    const revokedAt = this.clock.now().toISOString();
+    const revokedIdentity =
+      input.reason === undefined
+        ? {
+            ...identity,
+            status: 'revoked' as const,
+            revokedAt,
+            revokedBy: input.actorUserId,
+          }
+        : {
+            ...identity,
+            status: 'revoked' as const,
+            revokedAt,
+            revokedBy: input.actorUserId,
+            revocationReason: input.reason,
+          };
+    const activeScopes = await this.repository.listActiveScopesForGuest({
+      tenantId: input.tenantId,
+      guestUserId: input.guestUserId,
+    });
+    const revokedScopes = activeScopes.map((scope) => ({
+      ...scope,
+      revokedAt,
+      revokedBy: input.actorUserId,
+    }));
+    const revokedSessionCount =
+      await this.sessionInvalidator.revokeUserSessions(
+        input.tenantId,
+        input.guestUserId,
+        'guest_kill_switch',
+      );
+    const invalidatedRealtimeSubscriptionCount =
+      await this.realtimeInvalidator.invalidateUserSubscriptions({
+        tenantId: input.tenantId,
+        userId: input.guestUserId,
+      });
+
+    await this.repository.saveGuestIdentity(revokedIdentity);
+    await this.repository.saveScopes(revokedScopes);
+    await this.auditService.writeEvent({
+      tenantId: input.tenantId,
+      officeId: input.officeId,
+      actorId: input.actorUserId,
+      type: 'guest.kill_switch_activated',
+      metadata:
+        input.reason === undefined
+          ? {
+              guestId: identity.id,
+              guestUserId: input.guestUserId,
+              revokedScopeCount: revokedScopes.length,
+              revokedSessionCount,
+              invalidatedRealtimeSubscriptionCount,
+            }
+          : {
+              guestId: identity.id,
+              guestUserId: input.guestUserId,
+              revokedScopeCount: revokedScopes.length,
+              revokedSessionCount,
+              invalidatedRealtimeSubscriptionCount,
+              reason: input.reason,
+            },
+    });
+
+    return Object.freeze({
+      guestId: identity.id,
+      guestUserId: input.guestUserId,
+      status: 'revoked',
+      revokedAt,
+      revokedScopeCount: revokedScopes.length,
+      revokedSessionCount,
+      invalidatedRealtimeSubscriptionCount,
+    });
+  }
+
   private async requireAdminMembership(
     tenantId: string,
     userId: string,
@@ -439,17 +555,7 @@ function uniqueIds(ids: string[]): string[] {
 }
 
 function cloneGuestIdentity(identity: GuestIdentity): GuestIdentity {
-  return identity.displayName === undefined
-    ? {
-        id: identity.id,
-        tenantId: identity.tenantId,
-        officeId: identity.officeId,
-        userId: identity.userId,
-        status: identity.status,
-        createdBy: identity.createdBy,
-        createdAt: identity.createdAt,
-      }
-    : { ...identity };
+  return { ...identity };
 }
 
 function cloneGuestScope(scope: GuestScope): GuestScope {

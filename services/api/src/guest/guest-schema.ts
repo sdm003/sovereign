@@ -8,6 +8,9 @@ create table guest_identity (
   status text not null,
   created_by uuid not null,
   created_at timestamptz not null default now(),
+  revoked_at timestamptz,
+  revoked_by uuid,
+  revocation_reason text,
   unique(tenant_id, user_id)
 );
 
