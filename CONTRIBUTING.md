@@ -73,6 +73,10 @@ Every pull request should:
 
 Use the repository PR template.
 
+The current baseline CI and merge-guard expectations are documented in:
+
+- `.github/REPOSITORY_GUARDRAILS.md`
+
 ## Ownership boundaries
 
 Path ownership follows the locked architecture:
@@ -104,6 +108,8 @@ An issue is done when:
 2. repo docs are updated if the change affects architecture or workflow
 3. tests or checks appropriate to the change have been run
 4. the Linear issue status and PR context reflect reality
+
+For pull-request work that touches repository structure or bootstrap rules, the baseline `repo-structure` check is expected to pass.
 
 ## Safety rules
 

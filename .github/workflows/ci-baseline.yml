@@ -1,0 +1,28 @@
+name: baseline-ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  repo-structure:
+    name: repo-structure
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate root package manifest
+        run: node -e "const fs=require('node:fs'); JSON.parse(fs.readFileSync('package.json','utf8'));"
+
+      - name: Validate approved monorepo paths
+        run: npm run check:structure
