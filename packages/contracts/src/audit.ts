@@ -1,0 +1,49 @@
+export const auditEventTypes = [
+  'auth.invitation_issued',
+  'auth.session_issued',
+  'membership.created',
+  'membership.status_changed',
+  'guest.identity_created',
+  'guest.scope_granted',
+  'file.upload_intent_created',
+  'file.download_authorized',
+  'tier.conversation_tier_changed',
+  'dissolution.requested',
+  'dissolution.resolved',
+  'recovery.requested',
+  'recovery.completed',
+  'support.elevation_requested',
+  'support.elevation_revoked',
+] as const;
+
+export type AuditEventType = (typeof auditEventTypes)[number];
+
+export type AuditEventMetadataValue =
+  | string
+  | number
+  | boolean
+  | null
+  | AuditEventMetadataValue[]
+  | {
+      [key: string]: AuditEventMetadataValue;
+    };
+
+export type AuditEventMetadata = Record<string, AuditEventMetadataValue>;
+
+export type AuditEvent = {
+  id: string;
+  tenantId: string;
+  officeId: string;
+  type: AuditEventType;
+  metadata: AuditEventMetadata;
+  occurredAt: string;
+  actorId?: string;
+};
+
+export type WriteAuditEventInput = {
+  tenantId: string;
+  officeId: string;
+  type: string;
+  metadata: AuditEventMetadata;
+  actorId?: string;
+};

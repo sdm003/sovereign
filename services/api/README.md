@@ -17,5 +17,7 @@ The backend remains the source of truth for policy-sensitive decisions.
 Runtime baseline artifacts introduced during bootstrap:
 
 - `.env.example`
+- `src/audit/audit-service.ts`
+- `src/audit/audit-schema.ts`
 - `src/runtime/runtime-config.ts`
 - `src/runtime/runtime-schema.ts`
