@@ -30,7 +30,35 @@ public enum PreviewFixtures {
         accessState: .locked(reason: .restrictedReentryRequired)
     )
 
+    public static let timeoutLockedConversation = ConversationSummary(
+        id: "conversation-3",
+        title: "Restricted Timeout",
+        tier: .restricted,
+        participants: [
+            ConversationParticipantSummary(id: "user-1", displayName: "Amina", kind: .member),
+        ],
+        lastMessagePreview: nil,
+        lastActivityAt: Date(timeIntervalSince1970: 1_715_001_000),
+        unreadCount: 0,
+        accessState: .locked(reason: .restrictedSessionExpired)
+    )
+
+    public static let revokedKeyConversation = ConversationSummary(
+        id: "conversation-4",
+        title: "Restricted Key Revoked",
+        tier: .restricted,
+        participants: [
+            ConversationParticipantSummary(id: "user-1", displayName: "Amina", kind: .member),
+        ],
+        lastMessagePreview: nil,
+        lastActivityAt: Date(timeIntervalSince1970: 1_715_001_500),
+        unreadCount: 0,
+        accessState: .locked(reason: .restrictedKeyRevoked)
+    )
+
     public static let conversations: [ConversationSummary] = [
+        revokedKeyConversation,
+        timeoutLockedConversation,
         lockedConversation,
         availableConversation,
     ]
@@ -86,6 +114,14 @@ public enum PreviewFixtures {
         ),
         lockedConversation.id: ConversationThread(
             conversation: lockedConversation,
+            items: []
+        ),
+        timeoutLockedConversation.id: ConversationThread(
+            conversation: timeoutLockedConversation,
+            items: []
+        ),
+        revokedKeyConversation.id: ConversationThread(
+            conversation: revokedKeyConversation,
             items: []
         ),
     ]

@@ -249,11 +249,21 @@ public struct ConversationThreadView: View {
 
     @ViewBuilder
     private func lockedState(reason: ConversationLockReason) -> some View {
-        ContentUnavailableView(
-            "Thread Locked",
-            systemImage: "lock.shield",
-            description: Text(reason.message)
-        )
+        VStack(spacing: 16) {
+            ContentUnavailableView(
+                "Restricted Thread Locked",
+                systemImage: "lock.shield",
+                description: Text(reason.message)
+            )
+            Button("Re-authenticate") {
+                Task {
+                    await viewModel.performRestrictedReentry()
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(viewModel.isPerformingRestrictedReentry)
+        }
+        .padding()
     }
 
     @ViewBuilder
@@ -368,6 +378,26 @@ struct ConversationThreadView_Previews: PreviewProvider {
             )
             ConversationThreadView(
                 conversationId: PreviewFixtures.lockedConversation.id,
+                viewModel: ConversationThreadViewModel(
+                    client: PreviewConversationClient(
+                        conversations: PreviewFixtures.conversations,
+                        threads: PreviewFixtures.threads
+                    ),
+                    realtimeClient: PreviewConversationRealtimeClient()
+                )
+            )
+            ConversationThreadView(
+                conversationId: PreviewFixtures.timeoutLockedConversation.id,
+                viewModel: ConversationThreadViewModel(
+                    client: PreviewConversationClient(
+                        conversations: PreviewFixtures.conversations,
+                        threads: PreviewFixtures.threads
+                    ),
+                    realtimeClient: PreviewConversationRealtimeClient()
+                )
+            )
+            ConversationThreadView(
+                conversationId: PreviewFixtures.revokedKeyConversation.id,
                 viewModel: ConversationThreadViewModel(
                     client: PreviewConversationClient(
                         conversations: PreviewFixtures.conversations,

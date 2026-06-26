@@ -24,6 +24,11 @@ public enum ParticipantKind: String, Codable, Sendable {
 
 public enum ConversationLockReason: String, Codable, Sendable {
     case restrictedReentryRequired
+    case restrictedSessionExpired
+    case restrictedKeyRevoked
+    case restrictedNotEnrolled
+    case restrictedChallengeFailed
+    case restrictedChallengeCancelled
     case dissolved
     case unavailable
 
@@ -31,6 +36,16 @@ public enum ConversationLockReason: String, Codable, Sendable {
         switch self {
         case .restrictedReentryRequired:
             "Restricted re-entry is required before this thread can be opened."
+        case .restrictedSessionExpired:
+            "Your Restricted session expired. Re-authenticate before viewing this thread."
+        case .restrictedKeyRevoked:
+            "Your Restricted hardware key was revoked. Contact an office admin before re-entry."
+        case .restrictedNotEnrolled:
+            "A Restricted hardware key must be enrolled before this thread can be opened."
+        case .restrictedChallengeFailed:
+            "Restricted re-entry failed. Try the hardware-key challenge again."
+        case .restrictedChallengeCancelled:
+            "Restricted re-entry was cancelled. Re-authenticate before viewing this thread."
         case .dissolved:
             "This conversation is no longer available because the relationship was dissolved."
         case .unavailable:
@@ -42,6 +57,65 @@ public enum ConversationLockReason: String, Codable, Sendable {
 public enum ConversationAccessState: Equatable, Sendable {
     case available
     case locked(reason: ConversationLockReason)
+}
+
+public enum RestrictedSessionDenialReason: String, Codable, Sendable {
+    case timeout
+    case revokedKey
+    case notEnrolled
+    case challengeFailed
+    case cancelled
+
+    public var lockReason: ConversationLockReason {
+        switch self {
+        case .timeout:
+            .restrictedSessionExpired
+        case .revokedKey:
+            .restrictedKeyRevoked
+        case .notEnrolled:
+            .restrictedNotEnrolled
+        case .challengeFailed:
+            .restrictedChallengeFailed
+        case .cancelled:
+            .restrictedChallengeCancelled
+        }
+    }
+
+    public var errorMessage: String {
+        switch self {
+        case .timeout:
+            "Restricted re-entry is required because the session expired."
+        case .revokedKey:
+            "Restricted re-entry was denied because the hardware key was revoked."
+        case .notEnrolled:
+            "Restricted re-entry requires an enrolled hardware key."
+        case .challengeFailed:
+            "Restricted re-entry failed. Try again."
+        case .cancelled:
+            "Restricted re-entry was cancelled."
+        }
+    }
+}
+
+public struct RestrictedSessionStatus: Equatable, Sendable {
+    public let active: Bool
+    public let expiresAt: Date?
+    public let reason: RestrictedSessionDenialReason?
+
+    public init(
+        active: Bool,
+        expiresAt: Date? = nil,
+        reason: RestrictedSessionDenialReason? = nil
+    ) {
+        self.active = active
+        self.expiresAt = expiresAt
+        self.reason = reason
+    }
+}
+
+public enum RestrictedReentryResult: Equatable, Sendable {
+    case success
+    case denied(reason: RestrictedSessionDenialReason)
 }
 
 public struct ConversationParticipantSummary: Identifiable, Equatable, Sendable {
@@ -108,6 +182,19 @@ public struct ConversationSummary: Identifiable, Equatable, Sendable {
         }
 
         return segments.joined(separator: " • ")
+    }
+
+    public func maskingRestrictedContent(reason: ConversationLockReason) -> ConversationSummary {
+        ConversationSummary(
+            id: id,
+            title: title,
+            tier: tier,
+            participants: participants,
+            lastMessagePreview: nil,
+            lastActivityAt: lastActivityAt,
+            unreadCount: 0,
+            accessState: .locked(reason: reason)
+        )
     }
 }
 

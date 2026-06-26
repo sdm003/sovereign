@@ -35,6 +35,7 @@ public final class ConversationThreadViewModel: ObservableObject {
     @Published public private(set) var errorMessage: String?
     @Published public private(set) var connectionId: String?
     @Published public private(set) var isSubmittingDissolutionAction = false
+    @Published public private(set) var isPerformingRestrictedReentry = false
 
     private let client: ConversationClient
     private let realtimeClient: ConversationRealtimeClient
@@ -53,11 +54,20 @@ public final class ConversationThreadViewModel: ObservableObject {
 
     public func load(conversationId: String) async {
         realtimeSubscription?.cancel()
+        realtimeSubscription = nil
         isLoading = true
         errorMessage = nil
 
         do {
             let loadedThread = try await client.fetchConversationThread(conversationId: conversationId)
+            if loadedThread.conversation.tier == .restricted,
+               case let .locked(reason) = loadedThread.conversation.accessState {
+                thread = maskedRestrictedThread(loadedThread, reason: reason)
+                connectionId = nil
+                isLoading = false
+                return
+            }
+
             thread = loadedThread
             isLoading = false
 
@@ -82,6 +92,45 @@ public final class ConversationThreadViewModel: ObservableObject {
         }
     }
 
+    public func applyRestrictedSessionStatus(_ status: RestrictedSessionStatus) async {
+        guard !status.active else {
+            return
+        }
+        guard let currentThread = thread, currentThread.conversation.tier == .restricted else {
+            return
+        }
+
+        lockRestrictedThread(
+            currentThread,
+            reason: status.reason?.lockReason ?? .restrictedReentryRequired
+        )
+    }
+
+    public func performRestrictedReentry() async {
+        guard let currentThread = thread, currentThread.conversation.tier == .restricted else {
+            return
+        }
+
+        isPerformingRestrictedReentry = true
+        errorMessage = nil
+
+        do {
+            let result = try await client.performRestrictedReentry(conversationId: currentThread.conversation.id)
+            switch result {
+            case .success:
+                await load(conversationId: currentThread.conversation.id)
+            case let .denied(reason):
+                lockRestrictedThread(currentThread, reason: reason.lockReason)
+                errorMessage = reason.errorMessage
+            }
+        } catch {
+            lockRestrictedThread(currentThread, reason: .restrictedChallengeFailed)
+            errorMessage = RestrictedSessionDenialReason.challengeFailed.errorMessage
+        }
+
+        isPerformingRestrictedReentry = false
+    }
+
     public func submitDissolutionAction(_ action: DissolutionAction) async {
         guard let currentThread = thread else {
             return
@@ -104,6 +153,28 @@ public final class ConversationThreadViewModel: ObservableObject {
         }
 
         isSubmittingDissolutionAction = false
+    }
+
+    private func lockRestrictedThread(
+        _ currentThread: ConversationThread,
+        reason: ConversationLockReason
+    ) {
+        realtimeSubscription?.cancel()
+        realtimeSubscription = nil
+        connectionId = nil
+        pendingRealtimeEvents.removeAll()
+        thread = maskedRestrictedThread(currentThread, reason: reason)
+    }
+
+    private func maskedRestrictedThread(
+        _ currentThread: ConversationThread,
+        reason: ConversationLockReason
+    ) -> ConversationThread {
+        ConversationThread(
+            conversation: currentThread.conversation.maskingRestrictedContent(reason: reason),
+            dissolution: DissolutionViewState(status: .notAvailable, allowedActions: []),
+            items: []
+        )
     }
 
     private func enqueue(_ event: ThreadRealtimeEvent) async {

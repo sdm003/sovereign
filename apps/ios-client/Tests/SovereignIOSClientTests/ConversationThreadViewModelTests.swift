@@ -194,6 +194,191 @@ struct ConversationThreadViewModelTests {
     }
 
     @Test
+    func clearsRestrictedPayloadsReturnedWithLockedThreadResponses() async throws {
+        let conversation = ConversationSummary(
+            id: "restricted-locked-payload",
+            title: "Restricted",
+            tier: .restricted,
+            participants: [],
+            lastMessagePreview: "Server should not show this",
+            lastActivityAt: Date(timeIntervalSince1970: 100),
+            unreadCount: 3,
+            accessState: .locked(reason: .restrictedSessionExpired)
+        )
+        let leakedMessage = ThreadMessage(
+            id: "locked-message",
+            conversationId: conversation.id,
+            senderDisplayName: "Amina",
+            senderKind: .member,
+            body: "Must not remain in client state",
+            createdAt: Date(timeIntervalSince1970: 110)
+        )
+        let client = MockConversationClient(
+            conversations: [conversation],
+            threads: [
+                conversation.id: ConversationThread(
+                    conversation: conversation,
+                    items: [.message(leakedMessage)]
+                ),
+            ],
+            messages: [:],
+            timelineEvents: [:]
+        )
+        let realtime = MockConversationRealtimeClient()
+        let viewModel = ConversationThreadViewModel(client: client, realtimeClient: realtime)
+
+        await viewModel.load(conversationId: conversation.id)
+
+        #expect(viewModel.thread?.items.isEmpty == true)
+        #expect(viewModel.thread?.conversation.lastMessagePreview == nil)
+        #expect(viewModel.thread?.conversation.unreadCount == 0)
+        #expect(viewModel.connectionId == nil)
+        #expect(realtime.connectCallCount == 0)
+    }
+
+    @Test
+    func masksRestrictedContentBeforeShowingTimeoutLockState() async throws {
+        let conversation = ConversationSummary(
+            id: "restricted-timeout-thread",
+            title: "Restricted",
+            tier: .restricted,
+            participants: [
+                ConversationParticipantSummary(id: "1", displayName: "Amina", kind: .member),
+            ],
+            lastMessagePreview: "Sensitive preview",
+            lastActivityAt: Date(timeIntervalSince1970: 100),
+            unreadCount: 1,
+            accessState: .available
+        )
+        let sensitiveMessage = ThreadMessage(
+            id: "restricted-message",
+            conversationId: conversation.id,
+            senderDisplayName: "Amina",
+            senderKind: .member,
+            body: "Sensitive restricted body",
+            createdAt: Date(timeIntervalSince1970: 110)
+        )
+        let thread = ConversationThread(
+            conversation: conversation,
+            items: [.message(sensitiveMessage)]
+        )
+        let client = MockConversationClient(
+            conversations: [conversation],
+            threads: [conversation.id: thread],
+            messages: [:],
+            timelineEvents: [:]
+        )
+        let viewModel = ConversationThreadViewModel(
+            client: client,
+            realtimeClient: MockConversationRealtimeClient()
+        )
+
+        await viewModel.load(conversationId: conversation.id)
+        await viewModel.applyRestrictedSessionStatus(
+            RestrictedSessionStatus(active: false, reason: .timeout)
+        )
+
+        #expect(viewModel.thread?.items.isEmpty == true)
+        #expect(viewModel.thread?.dissolution.status == .notAvailable)
+        #expect(viewModel.thread?.conversation.lastMessagePreview == nil)
+        #expect(viewModel.thread?.conversation.unreadCount == 0)
+        #expect(viewModel.thread?.conversation.accessState == .locked(reason: .restrictedSessionExpired))
+        #expect(viewModel.connectionId == nil)
+    }
+
+    @Test
+    func reentrySuccessReloadsTheIntendedRestrictedThread() async throws {
+        let lockedConversation = ConversationSummary(
+            id: "restricted-reentry-thread",
+            title: "Restricted",
+            tier: .restricted,
+            participants: [],
+            lastMessagePreview: nil,
+            lastActivityAt: Date(timeIntervalSince1970: 100),
+            unreadCount: 0,
+            accessState: .locked(reason: .restrictedSessionExpired)
+        )
+        let unlockedConversation = ConversationSummary(
+            id: lockedConversation.id,
+            title: "Restricted",
+            tier: .restricted,
+            participants: [],
+            lastMessagePreview: "Unlocked preview",
+            lastActivityAt: Date(timeIntervalSince1970: 120),
+            unreadCount: 0,
+            accessState: .available
+        )
+        let locked = ConversationThread(conversation: lockedConversation, items: [])
+        let unlocked = ConversationThread(
+            conversation: unlockedConversation,
+            items: [
+                .message(
+                    ThreadMessage(
+                        id: "restricted-unlocked-message",
+                        conversationId: unlockedConversation.id,
+                        senderDisplayName: "Amina",
+                        senderKind: .member,
+                        body: "Unlocked restricted body",
+                        createdAt: Date(timeIntervalSince1970: 120)
+                    )
+                ),
+            ]
+        )
+        let client = MockConversationClient(
+            conversations: [lockedConversation],
+            threads: [lockedConversation.id: locked],
+            messages: [:],
+            timelineEvents: [:]
+        )
+        client.reentryResults[lockedConversation.id] = .success
+        let viewModel = ConversationThreadViewModel(
+            client: client,
+            realtimeClient: MockConversationRealtimeClient()
+        )
+
+        await viewModel.load(conversationId: lockedConversation.id)
+        client.threadUpdates[lockedConversation.id] = unlocked
+        await viewModel.performRestrictedReentry()
+
+        #expect(client.reentryConversationIds == [lockedConversation.id])
+        #expect(viewModel.thread?.conversation.accessState == .available)
+        #expect(viewModel.thread?.items.map(\.id) == ["restricted-unlocked-message"])
+        #expect(viewModel.errorMessage == nil)
+    }
+
+    @Test
+    func reentryFailureKeepsThreadLockedAndHandlesRevokedKeyExplicitly() async throws {
+        let conversation = ConversationSummary(
+            id: "restricted-revoked-thread",
+            title: "Restricted",
+            tier: .restricted,
+            participants: [],
+            lastMessagePreview: nil,
+            lastActivityAt: Date(timeIntervalSince1970: 100),
+            unreadCount: 0,
+            accessState: .locked(reason: .restrictedSessionExpired)
+        )
+        let client = MockConversationClient(
+            conversations: [conversation],
+            threads: [conversation.id: ConversationThread(conversation: conversation, items: [])],
+            messages: [:],
+            timelineEvents: [:]
+        )
+        client.reentryResults[conversation.id] = .denied(reason: .revokedKey)
+        let viewModel = ConversationThreadViewModel(
+            client: client,
+            realtimeClient: MockConversationRealtimeClient()
+        )
+
+        await viewModel.load(conversationId: conversation.id)
+        await viewModel.performRestrictedReentry()
+
+        #expect(viewModel.thread?.items.isEmpty == true)
+        #expect(viewModel.thread?.conversation.accessState == .locked(reason: .restrictedKeyRevoked))
+        #expect(viewModel.errorMessage == "Restricted re-entry was denied because the hardware key was revoked.")
+    }
+
+    @Test
     func appendsRealtimeMessagesAndTimelineEventsWithoutDuplicates() async throws {
         let conversation = ConversationSummary(
             id: "thread-1",

@@ -7,6 +7,8 @@ final class MockConversationClient: ConversationClient, @unchecked Sendable {
     let messages: [String: ThreadMessage]
     let timelineEvents: [String: ThreadTimelineEvent]
     var dissolutionActions: [DissolutionAction] = []
+    var reentryConversationIds: [String] = []
+    var reentryResults: [String: RestrictedReentryResult] = [:]
     var threadUpdates: [String: ConversationThread] = [:]
     var actionError: Error?
 
@@ -65,6 +67,11 @@ final class MockConversationClient: ConversationClient, @unchecked Sendable {
         }
 
         return thread
+    }
+
+    func performRestrictedReentry(conversationId: String) async throws -> RestrictedReentryResult {
+        reentryConversationIds.append(conversationId)
+        return reentryResults[conversationId] ?? .denied(reason: .challengeFailed)
     }
 }
 

@@ -24,6 +24,7 @@ public protocol ConversationClient: Sendable {
         conversationId: String,
         action: DissolutionAction
     ) async throws -> ConversationThread
+    func performRestrictedReentry(conversationId: String) async throws -> RestrictedReentryResult
 }
 
 public protocol ConversationRealtimeClient: Sendable {
@@ -99,6 +100,11 @@ public struct PreviewConversationClient: ConversationClient {
     ) async throws -> ConversationThread {
         _ = action
         return try await fetchConversationThread(conversationId: conversationId)
+    }
+
+    public func performRestrictedReentry(conversationId: String) async throws -> RestrictedReentryResult {
+        _ = conversationId
+        return .success
     }
 }
 
