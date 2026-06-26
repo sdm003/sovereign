@@ -1,4 +1,9 @@
-import type { AuthRole, MembershipStatus } from './auth';
+import type {
+  AuthRole,
+  KycStatus,
+  MemberOnboardingStatus,
+  MembershipStatus,
+} from './auth';
 
 export type Tenant = {
   id: string;
@@ -20,6 +25,8 @@ export type Membership = {
   userId: string;
   role: AuthRole;
   status: MembershipStatus;
+  onboardingStatus: MemberOnboardingStatus;
+  kycStatus: KycStatus;
   createdAt: string;
 };
 

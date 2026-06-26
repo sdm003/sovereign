@@ -99,6 +99,10 @@ export class InMemoryTenancyRepository {
     this.memberships.set(membership.id, membership);
   }
 
+  async saveMembership(membership: Membership): Promise<void> {
+    this.memberships.set(membership.id, membership);
+  }
+
   async findMembershipByTenantAndUser(
     tenantId: string,
     userId: string,
@@ -207,6 +211,8 @@ export class TenancyService {
       userId: input.userId,
       role: input.role,
       status: input.status,
+      onboardingStatus: 'invited',
+      kycStatus: 'not_started',
       createdAt: this.clock.now().toISOString(),
     };
     await this.repository.createMembership(membership);

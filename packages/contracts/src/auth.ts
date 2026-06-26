@@ -11,6 +11,19 @@ export type MembershipStatus =
   | 'suspended'
   | 'removed';
 
+export type MemberOnboardingStatus =
+  | 'invited'
+  | 'pending_kyc'
+  | 'active'
+  | 'suspended'
+  | 'removed';
+
+export type KycStatus =
+  | 'not_started'
+  | 'pending'
+  | 'approved'
+  | 'failed';
+
 export type InvitationStatus =
   | 'pending'
   | 'completed'
