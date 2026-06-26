@@ -1,5 +1,6 @@
 export * from './auth';
 export * from './audit';
+export * from './attachment';
 export * from './conversation';
 export * from './device';
 export * from './guest';

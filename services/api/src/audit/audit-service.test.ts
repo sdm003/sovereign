@@ -26,6 +26,8 @@ test('covers the required governance domains in the audit taxonomy', () => {
     'guest.scope_granted',
     'guest.scope_revoked',
     'file.upload_intent_created',
+    'file.attachment_finalized',
+    'file.metadata_viewed',
     'file.download_authorized',
     'tier.conversation_tier_changed',
     'dissolution.requested',
