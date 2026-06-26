@@ -27,3 +27,14 @@ Supporting planning artifacts currently tracked in-repo:
 - `doc/v1-delivery/SOVEREIGN_V1_Frontend_Breakdown.txt`
 - `doc/v1-delivery/SOVEREIGN_V1_Design_Breakdown.txt`
 - `doc/v1-delivery/SOVEREIGN_V1_Infra_Security_Ops_Breakdown.txt`
+
+## Contribution workflow
+
+Repository workflow standards live in:
+
+- `CONTRIBUTING.md`
+- `.github/CODEOWNERS`
+- `.github/pull_request_template.md`
+- `.github/ISSUE_TEMPLATE/`
+
+The working convention for bootstrap and product delivery is one Linear issue per branch and, when feasible, one PR and one primary commit per completed issue.

@@ -1,0 +1,11 @@
+# Default owner during bootstrap.
+* @sdm003
+
+# Path ownership hints aligned to the V1 monorepo architecture.
+/apps/ios-client/ @sdm003
+/apps/admin-console/ @sdm003
+/services/api/ @sdm003
+/packages/contracts/ @sdm003
+/packages/ui-admin/ @sdm003
+/infra/ @sdm003
+/doc/ @sdm003
