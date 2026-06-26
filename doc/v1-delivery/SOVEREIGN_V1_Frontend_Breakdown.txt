@@ -1,0 +1,219 @@
+SOVEREIGN V1
+Frontend / Client Breakdown
+Version 1.1
+
+1. Purpose
+
+This document breaks V1 into frontend implementation stories and tasks. It assumes an iOS primary client and at least one admin-facing UI surface.
+
+
+2. Frontend Scope
+
+The frontend stream covers:
+- sign-in and session UX
+- conversation browsing and messaging
+- tier-aware behavior
+- restricted-access gating
+- guest-scoped UI
+- file interaction
+- governance visibility
+- admin workflows exposed through client or admin console
+
+
+3. Frontend Epics
+
+FE-EPIC-001. App shell, navigation, and session management
+FE-EPIC-002. Auth, enrollment, and member access states
+FE-EPIC-003. Messaging experience
+FE-EPIC-004. Restricted-tier UX and hardware-key flows
+FE-EPIC-005. Guest-scoped interaction model
+FE-EPIC-006. Governance and audit views
+FE-EPIC-007. Admin console / admin surfaces
+
+
+4. Frontend Stories And Tasks
+
+FE-001. Build application shell
+- iOS:
+  - SwiftUI app entry, navigation stacks, authenticated root container
+  - role-aware tab / section structure
+- Admin:
+  - Next.js app shell, protected layouts, navigation sidebars
+- Shared:
+  - loading and error boundary handling
+  - route guards based on backend permission state
+
+FE-002. Build sign-in and invited-user acceptance screens
+- iOS:
+  - invitation acceptance flow
+  - account activation status view
+  - device-trust state display
+  - passwordless invitation and sign-in completion
+- Admin:
+  - admin sign-in and session expiry handling
+  - no conversation participation surface in V1
+- Code tasks:
+  - token storage abstraction
+  - auth error mapping
+  - API integration for invitation and activation endpoints
+  - passwordless auth session completion and restore
+
+FE-003. Build device-enrollment screens
+- show pending device approval
+- show approved / revoked device states
+- support sign-out-all-devices feedback
+- implement polling or event refresh after admin approval
+
+FE-004. Build conversation list
+- sort and group conversations
+- show tier badge
+- show unread state
+- show participant summary and governance markers
+- implement pagination and optimistic refresh for realtime updates
+
+FE-005. Build conversation thread view
+- render messages, timestamps, identity, attachments
+- handle system governance events in thread or linked timeline
+- support thread participant summaries
+- support realtime append, reconnect, and unread marker behavior
+
+FE-006. Build conversation creation and participant-management UI
+- create Personal / Confidential / Restricted threads where allowed
+- add/remove participants subject to permissions
+- show blocked actions clearly
+- implement client-side forms around backend policy responses rather than local rules
+
+FE-007. Build restricted-thread lock states
+- pre-access locked view
+- session-expired state
+- failed re-entry state
+- revoked-key state
+- explicitly clear or mask Restricted content before lock-state presentation
+
+FE-008. Integrate hardware-key authentication UX
+- trigger re-authentication after timeout
+- return user to intended restricted thread on success
+- preserve safe state on failure or cancellation
+- bridge hardware-key outcome into restricted-session refresh workflow
+
+FE-009. Build guest-limited interface
+- show only guest-permitted threads
+- suppress office directory discovery
+- suppress non-permitted actions
+- prevent forward/share actions exposed in UI
+- verify empty-state and navigation behavior never imply hidden data
+
+FE-010. Build guest invite / revoke / kill-switch UI
+- scoped thread grant UI
+- confirmation flows
+- immediate disabled state for revoked guests
+- admin action feedback tied to backend audit and notification results
+
+FE-011. Build file upload and attachment views
+- upload progress
+- download enabled / disabled states
+- guest-restricted file behavior
+- governance notices for download-sensitive items
+- integrate signed upload and signed download flows
+
+FE-012. Build audit-log review screens
+- filters
+- event list
+- event detail drill-down
+- conversation-linked audit entry navigation
+- table / timeline views for admin surface
+
+FE-013. Build bilateral dissolution UI
+- request action
+- pending state
+- counterpart confirmation display
+- completed / rejected state
+- refresh behavior aligned to realtime or polling updates
+
+FE-014. Build admin policy screens
+- role assignment
+- restricted-eligibility assignment
+- session-timeout settings
+- file permission settings
+- guest access management
+- policy inheritance and override display
+
+FE-015. Build notification center or notification handling surfaces
+- invites
+- guest changes
+- repeated restricted-auth failures
+- dissolution activity
+- key revocations
+- admin-surface notification badges and refresh handling
+
+
+5. Frontend Technical Tasks
+
+FE-016. Define frontend domain models
+- Swift models for user, office member, guest, conversation, message, attachment, audit event, and dissolution state
+- TypeScript models for admin console using shared contracts package
+- mapping layer from DTOs to UI view models
+
+FE-017. Build data-access layer
+- iOS API client using async/await
+- admin API client using fetch wrapper or equivalent
+- auth token/session handling
+- retry and error mapping
+- pagination primitives
+- request tracing and correlation-id pass-through if provided by backend
+
+FE-018. Build permission-aware UI helpers
+- route guards
+- action-state guards
+- tier-specific capability rendering
+- centralized interpretation of effective-permission payloads
+
+FE-019. Build local session-state handling for restricted access
+- safe reset on timeout
+- secure return path after re-auth
+- visible locked-state transitions
+- local memory clearing rules for Restricted screens
+
+FE-020. Build reusable governance UI components
+- event badges
+- tier chips
+- warning modals
+- irreversible action confirmations
+- audit row and detail components
+
+FE-021. Build realtime client integration
+- WebSocket connection lifecycle
+- authenticated subscribe / unsubscribe flow
+- message, thread, and governance event handlers
+- reconnect and state re-sync behavior
+
+FE-022. Build form and mutation infrastructure
+- admin mutation helpers
+- optimistic UI rules where safe
+- toast / inline feedback patterns
+- conflict and stale-state handling
+
+FE-023. Build frontend testing baseline
+- SwiftUI previews and targeted unit / snapshot coverage where useful
+- web component and page tests for policy-sensitive states
+- test coverage for guest no-discovery and Restricted lock rendering
+
+
+6. Frontend Non-Functional Expectations
+
+NFR-FE-001. Restricted content must never appear briefly before re-auth is completed.
+NFR-FE-002. Guest users must never see navigation or metadata that implies broader office visibility.
+NFR-FE-003. Permission-denied states must be explicit and understandable.
+NFR-FE-004. UI must preserve trust and clarity more than visual density or speed.
+NFR-FE-005. Frontend applications must treat backend authorization responses as authoritative.
+
+
+7. Suggested Frontend Delivery Order
+
+ORDER-001. App shell and auth states
+ORDER-002. Conversation list and thread core
+ORDER-003. Participant and file interactions
+ORDER-004. Restricted lock and re-auth flows
+ORDER-005. Guest-scoped UI and kill switch
+ORDER-006. Audit and governance views
+ORDER-007. Admin policies and operational surfaces

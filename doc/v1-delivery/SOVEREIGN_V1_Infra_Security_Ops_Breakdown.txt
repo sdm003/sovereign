@@ -1,0 +1,173 @@
+SOVEREIGN V1
+Infrastructure, Security, Compliance, and Operations Breakdown
+Version 1.1
+
+1. Purpose
+
+This document breaks V1 into non-feature platform work required to make the product deployable, supportable, and credible for first customers.
+
+
+2. Scope
+
+This stream covers:
+- managed SaaS packaging and environment operations
+- environment and secret management
+- operational runbooks
+- KYC and support boundaries
+- monitoring and incident readiness
+- backup and recovery operations
+- release and rollback preparation
+
+
+3. Infra / Security / Ops Epics
+
+OPS-EPIC-001. SaaS deployment packaging and environment operations
+OPS-EPIC-002. Environment, secrets, and key operations
+OPS-EPIC-003. Monitoring, alerting, and incident response
+OPS-EPIC-004. KYC and onboarding operations
+OPS-EPIC-005. Support operating model and auditability
+OPS-EPIC-006. Recovery, backup, and business continuity
+OPS-EPIC-007. Production readiness and customer handoff
+
+
+4. Stories And Tasks
+
+OPS-001. Define reference SaaS topology
+- application components
+- database
+- storage
+- secret handling
+- network boundary assumptions
+- container-to-container communication rules
+
+OPS-002. Produce deployment package
+- container strategy
+- environment variable contract
+- installation prerequisites
+- health checks
+- managed environment packaging baseline
+- migration and seed execution strategy
+
+OPS-003. Define secrets-management baseline
+- service secrets
+- signing secrets
+- database credentials
+- operator access boundaries
+- rotation procedure for runtime secrets
+
+OPS-004. Define key lifecycle operations
+- hardware-key issuance recording
+- backup-key handling
+- key revocation process
+- key replacement approvals
+- backend and admin operational touchpoints
+
+OPS-005. Define KYC integration operations
+- vendor handoff boundary
+- identity-verification states
+- operational escalation path for failed or pending verification
+- secret and webhook handling assumptions if provider requires them
+
+OPS-006. Produce onboarding runbook
+- office creation
+- member provisioning
+- device approval
+- restricted-user setup
+- guest setup
+- admin training handoff
+- repository bootstrap and environment initialization steps
+- tenant provisioning and office creation steps
+
+OPS-007. Produce support-operation runbook
+- what support may do
+- what support may not do
+- approval requirements
+- customer-contact model
+- audit requirements for operator actions
+- production access and break-glass expectations
+
+OPS-008. Define incident-response runbook
+- auth failures
+- suspected guest misuse
+- key compromise
+- data-access incident
+- service outage
+- audit-ingestion failure
+
+OPS-009. Define backup and restore model
+- database backup cadence
+- attachment/data backup responsibility
+- restore testing expectations
+- customer-owned responsibilities versus SOVEREIGN responsibilities
+- restore verification checklist
+
+OPS-010. Define monitoring and alerting
+- auth failure spikes
+- kill-switch actions
+- service health
+- audit-ingestion failures
+- future cross-office groundwork integration failures
+- database and object-storage health indicators
+
+OPS-011. Define production logs and retention
+- application logs
+- admin logs
+- audit-event storage rules
+- compliance-sensitive log redaction rules
+- correlation and trace identifiers across services
+
+OPS-012. Define release management process
+- environment promotion
+- rollout checklist
+- rollback checklist
+- change-approval model
+- migration compatibility expectations
+
+OPS-013. Define recovery procedures
+- lost primary key
+- revoked compromised device
+- lost device plus backup-key access
+- dedicated recovery SIM/number verification path for double-loss recovery
+- support and admin coordination points
+
+OPS-014. Define support-mode deployment policy
+- standard managed SaaS mode
+- controlled support-elevation mode
+- operator-access restrictions in each mode
+- environment-level differences between normal and elevated support modes
+
+OPS-015. Produce first-customer readiness checklist
+- installable
+- observable
+- operable
+- supportable
+- documented
+- recoverable
+
+
+5. Compliance And Trust Tasks
+
+OPS-016. Define auditability requirements for support actions
+OPS-017. Define evidence package needed for prospective customers
+OPS-018. Define boundary between governed communications claims and broader cybersecurity claims
+OPS-019. Define customer responsibility matrix
+OPS-020. Define third-party dependency register
+OPS-021. Define deployment hardening checklist for customer environments
+
+
+6. Key Operational Decisions Still Open
+
+OPEN-OPS-001. Final KYC provider
+OPEN-OPS-002. Final hardware-key vendor and logistics model
+OPEN-OPS-003. Exact support access mechanism for managed-support clients
+OPEN-OPS-004. Exact backup and restore ownership split inside the managed SaaS operating model
+OPEN-OPS-005. Exact production logging and retention defaults by client jurisdiction
+
+
+7. Suggested Delivery Order
+
+ORDER-OPS-001. Deployment topology and packaging baseline
+ORDER-OPS-002. Secrets, key lifecycle, and operator-boundary definitions
+ORDER-OPS-003. Onboarding and support runbooks
+ORDER-OPS-004. Monitoring, incident response, and backup model
+ORDER-OPS-005. Production readiness checklist and handoff artifacts

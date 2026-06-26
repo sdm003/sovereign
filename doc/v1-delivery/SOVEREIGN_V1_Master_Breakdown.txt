@@ -1,0 +1,181 @@
+SOVEREIGN V1
+Master Breakdown
+Version 1.1
+Status: Working draft
+
+1. Purpose
+
+This delivery pack translates the V1 functional requirements into implementation streams that can later be converted into Linear epics, stories, and tasks.
+
+V1 means a fully functional first product for secure governed communications. V1 does not mean broad office cybersecurity, endpoint protection, or generic collaboration software.
+
+
+2. V1 Product Definition
+
+Core product:
+- Secure governed communications infrastructure for family offices.
+- Primary use case: principal command center for sensitive internal coordination.
+- Secondary use case: tightly scoped external counterparty participation.
+
+Core differentiators:
+- Verified identity and office-bound membership
+- Conversation tiers: Personal, Confidential, Restricted
+- Restricted access protected by hardware-key re-authentication after timeout
+- Scoped guest access
+- Kill switch
+- Immutable audit and governance log
+- Bilateral dissolution for governed conversations
+- Self-hosted client deployment
+
+
+3. V1 Delivery Streams
+
+STREAM-001. Product and scope governance
+STREAM-002. Design and UX
+STREAM-003. Frontend / client applications
+STREAM-004. Backend / platform
+STREAM-005. Infrastructure, security, compliance, and operations
+
+
+4. Recommended V1 Epic Structure
+
+EPIC-001. Identity, membership, and office administration
+EPIC-002. Conversation model and messaging core
+EPIC-003. Restricted access and hardware-key flows
+EPIC-004. Guest / counterparty access and kill switch
+EPIC-005. Governance, audit log, and bilateral dissolution
+EPIC-006. File sharing and download controls
+EPIC-007. SaaS deployment, tenant isolation, and future cross-office groundwork
+EPIC-008. Onboarding, recovery, and support operations
+EPIC-009. Design system and client UX
+
+
+5. Architecture Assumptions Used In This Breakdown
+
+ASSUMPTION-001. The main end-user client is iOS implemented with SwiftUI.
+ASSUMPTION-002. An admin surface is still required for office setup, permissions, guest control, audit review, and support workflows and is implemented with Next.js.
+ASSUMPTION-003. Backend is the source of truth for identity, policy, conversations, permissions, governance events, and inter-instance trust and is implemented with NestJS.
+ASSUMPTION-004. Hardware keys gate Restricted access through supported authentication flows, with re-entry required after sensitive-session timeout.
+ASSUMPTION-005. The first release is a SOVEREIGN-managed SaaS product, not a self-hosted product.
+ASSUMPTION-006. PostgreSQL is the persistent system of record, Redis is ephemeral infrastructure, and object storage holds attachment binaries.
+ASSUMPTION-007. The repository is a monorepo with separate iOS, admin, backend, shared contracts, and infra areas.
+ASSUMPTION-008. One tenant maps to exactly one office in V1.
+
+
+6. Functional Requirement Coverage By Stream
+
+Design / UX
+- Role journeys for Principal, Office Admin, Internal Member, Guest
+- Tier mental model and visibility states
+- Restricted-session entry and timeout recovery flows
+- Guest invite / revoke / kill-switch interaction model
+- Audit-log review experience
+- Bilateral dissolution states and warnings
+- state and copy specifications for permission-denied, revoked, locked, and recovery conditions
+
+Frontend / Client
+- SwiftUI app shell, navigation, and session lifecycle
+- Next.js admin shell and policy / audit views
+- Conversation list, thread view, tier badges, participant states
+- Restricted-entry gating and timeout prompts
+- Guest-scoped UI and limited-discovery UI rules
+- File share, file access-state messaging, and governance notifications
+- realtime message and governance-event handling
+
+Backend / Platform
+- NestJS modules for office, member, device, role, and guest models
+- Tiered conversation model and permissions engine
+- Restricted session and policy enforcement
+- Audit log and governance-event pipeline
+- File permission enforcement and signed-upload flows
+- Bilateral dissolution state machine
+- Deferred future cross-office trust groundwork
+
+Infra / Security / Ops
+- SaaS environment packaging and deployment
+- Secrets, key lifecycle, recovery, and admin operations
+- internal-member KYC-provider integration boundary
+- Support access boundary and operator activity logging
+- Monitoring, backup, incident handling, rollout, and recovery procedures
+- environment contract, migrations, and release workflows
+
+
+7. Recommended Delivery Phases
+
+PHASE-1. Foundations
+- create monorepo structure for iOS, admin, backend, contracts, and infra
+- define office instance model and role model
+- implement baseline auth/session skeleton
+- implement device registration skeleton
+- scaffold admin surface shell and backend policy framework
+- define event taxonomy and OpenAPI / contract generation approach
+
+PHASE-2. Messaging Core
+- implement conversation model and participant records
+- implement Personal / Confidential tier behavior
+- implement send/list message APIs and realtime message delivery
+- implement thread list and thread detail UI
+- implement file-share baseline with attachment metadata
+
+PHASE-3. Restricted Access
+- implement hardware-key enrollment registry and admin management
+- implement Restricted-tier authorization guard and restricted-session table
+- implement sensitive-session timeout and re-entry flow
+- emit restricted audit events and client-visible locked states
+
+PHASE-4. Counterparty Governance
+- implement guest lifecycle and scoped guest conversation model
+- implement no-discovery filtering across APIs and UI
+- implement kill switch and immediate session / socket invalidation
+- implement download controls and first audit-review enhancements
+
+PHASE-5. Governance Completion
+- implement bilateral dissolution workflow end to end
+- complete immutable log coverage for all policy-sensitive actions
+- implement recovery workflows and support tooling
+- harden tenant isolation, recovery controls, and future cross-office trust groundwork
+
+PHASE-6. SaaS Operational Readiness
+- package backend, admin, database, redis, and storage integration for managed SaaS
+- produce deployment, upgrade, and rollback runbooks
+- implement monitoring, backup, and restore procedures for tenant-safe operations
+- validate production readiness for first-customer SaaS rollout
+
+
+8. Suggested Deliverables In Repository
+
+This folder contains:
+- Design breakdown
+- Frontend breakdown
+- Backend breakdown
+- Infra / security / ops breakdown
+- Dependency and phase plan
+
+Repository deliverables should include:
+- apps/ios-client
+- apps/admin-console
+- services/api
+- packages/contracts
+- packages/ui-admin
+- infra
+- docs
+
+
+9. Recommended V1 Success Criteria
+
+SC-001. A principal and office admin can communicate securely in Confidential threads through the iOS client backed by policy-enforced APIs.
+SC-002. Restricted threads require approved membership and hardware-key re-authentication after timeout, and Restricted content is never rendered before re-auth succeeds.
+SC-003. A guest can be invited into exactly the intended scope and removed instantly, with API, UI, and realtime access invalidation aligned.
+SC-004. All sensitive actions generate reviewable immutable governance records with filterable audit access.
+SC-005. The product can be operated as a SOVEREIGN-managed SaaS environment with strict tenant isolation and governed recovery controls.
+SC-006. Operational recovery, onboarding, and support procedures are documented well enough for first-customer use.
+
+
+10. What This Breakdown Is For
+
+Use this pack to:
+- Create Linear epics and stories
+- Align product, design, frontend, backend, and ops scope
+- Sequence implementation without losing governance requirements
+- Keep V1 focused on governed communications rather than broad cyber tooling
+- turn product requirements into concrete code, schema, API, UI, and deployment tasks

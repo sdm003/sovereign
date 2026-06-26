@@ -1,0 +1,338 @@
+SOVEREIGN
+Functional Requirements Document
+Version 1.1
+Status: Draft
+Scope: V1
+
+1. Purpose
+
+This document defines the functional requirements for SOVEREIGN V1.
+SOVEREIGN is a secure, governed communications infrastructure for family offices and similar institutional clients. The product scope for V1 is secure governed communications only. It is not a general cybersecurity platform.
+
+The primary V1 use case is a principal command center for sensitive internal coordination, with controlled external counterparty participation inside the same system.
+
+
+2. Product Objectives
+
+OBJ-001. The system shall replace ad hoc use of consumer messaging tools for sensitive office communication.
+OBJ-002. The system shall enforce identity, access, and governance at the system level instead of relying primarily on user discipline.
+OBJ-003. The system shall support a SOVEREIGN-managed SaaS deployment model for the first release.
+OBJ-004. The system shall allow SOVEREIGN-led onboarding and optional operational support after deployment.
+OBJ-005. The system shall support secure communication between offices and approved counterparties without exposing the wider network.
+
+
+3. Roles
+
+ROLE-001. Principal - the ultimate owner of the office and the highest-sensitivity user.
+ROLE-002. Office Admin - the client-side operational owner of the instance; typically chief of staff, trusted IT lead, or delegated admin.
+ROLE-003. Internal Member - an approved member of the office with role-based access.
+ROLE-004. Restricted Member - an internal member approved for restricted-tier communication.
+ROLE-005. Guest / Counterparty - an external participant with explicitly scoped access only.
+ROLE-006. SOVEREIGN Operator - a SOVEREIGN onboarding or support user acting within approved support boundaries.
+
+
+4. Functional Scope
+
+SCOPE-001. V1 shall include identity verification, access control, conversation tiering, hardware-key-gated restricted access, guest access, governance controls, audit logging, file sharing, recovery processes, and SaaS tenant-isolation support.
+SCOPE-002. V1 shall not require SOVEREIGN to manage the client's full cybersecurity posture outside the communications platform.
+
+
+4A. Technical Baseline Used For Implementation Tasking
+
+TECH-001. The primary end-user client shall be implemented as a SwiftUI iOS application.
+TECH-002. The admin interface shall be implemented as a Next.js TypeScript web application.
+TECH-003. The backend system shall be implemented as a NestJS TypeScript service.
+TECH-004. The backend shall expose REST APIs for core CRUD and policy actions and a WebSocket surface for realtime messaging and event delivery.
+TECH-005. PostgreSQL shall store system-of-record data for tenant, office, identity, membership, conversation, policy, governance, and recovery state.
+TECH-006. Redis shall be limited to cache, rate limiting, ephemeral session coordination, and realtime fan-out support.
+TECH-007. Attachment binaries shall be stored in S3-compatible object storage with backend-issued upload and download authorization.
+TECH-008. All policy-sensitive actions shall be enforced by the backend and represented by immutable governance events.
+TECH-009. The monorepo shall separate iOS client, admin console, backend service, shared contracts, and infrastructure assets.
+TECH-010. The first release shall operate as a multi-tenant SaaS platform with strict tenant isolation and exactly one office per tenant.
+
+
+5. Identity, Enrollment, and Authentication
+
+FR-001. The system shall require every user account to be tied to a real verified identity.
+FR-002. The system shall support KYC-based identity verification during onboarding before activation of internal members, while guest users shall use invitation-based identity verification in V1.
+FR-003. The system shall bind each approved user to a specific office instance.
+FR-004. The system shall support device enrollment for approved user devices.
+FR-005. The system shall maintain a record of enrolled devices per user.
+FR-006. The system shall allow an Office Admin to approve or revoke enrolled devices.
+FR-007. The system shall support hardware-key-based authentication for restricted access.
+FR-008. The system shall support assignment of at least one primary hardware key to a restricted user.
+FR-009. The system shall support assignment of at least one backup hardware key to a restricted user.
+FR-010. The system shall prevent a user from accessing restricted-tier content until hardware-key enrollment is completed.
+FR-011. The system shall require hardware-key authentication when a user re-enters a restricted session after timeout.
+FR-012. The system shall allow non-restricted access flows that do not require hardware-key authentication and shall support passwordless invitation-based onboarding in V1.
+FR-013. The system shall log every successful and failed restricted access attempt.
+FR-014. The system shall support forced sign-out from one or more devices by an Office Admin.
+
+
+6. Office and Membership Management
+
+FR-015. The system shall allow creation of an office instance representing one client organization.
+FR-016. The system shall support office membership records for all internal members.
+FR-017. The system shall allow an Office Admin to invite internal members.
+FR-018. The system shall allow an Office Admin to activate, suspend, or remove internal members.
+FR-019. The system shall support per-member role assignment.
+FR-020. The system shall support marking specific members as eligible for restricted-tier access.
+FR-021. The system shall allow an Office Admin to provision guest / counterparty users.
+FR-022. The system shall ensure a guest user is not treated as an internal member.
+FR-023. The system shall maintain a historical record of membership additions, removals, suspensions, and role changes.
+
+
+7. Conversation Model
+
+FR-024. The system shall support conversations grouped into office-controlled threads.
+FR-025. The system shall classify every conversation into exactly one tier: Personal, Confidential, or Restricted.
+FR-026. The system shall allow only authorized users to create conversations within a given tier.
+FR-027. The system shall display the tier classification of each conversation to authorized users.
+FR-028. The system shall prevent a conversation from existing without a tier classification.
+FR-029. The system shall support direct conversations and group conversations.
+FR-030. The system shall support adding and removing participants per conversation subject to permission rules.
+
+
+8. Tier Rules
+
+FR-031. The system shall enforce Personal-tier visibility so that only the owning principal can access Personal conversations unless an explicit exception model is later defined.
+FR-032. The system shall enforce Confidential-tier visibility so that only approved internal office members can access Confidential conversations.
+FR-033. The system shall enforce Restricted-tier visibility so that only approved restricted users with successful hardware-key authentication can access Restricted conversations.
+FR-034. The system shall prevent guest users from accessing Personal-tier conversations.
+FR-035. The system shall prevent guest users from accessing Confidential-tier conversations unless a conversation is explicitly designated for guest participation under office policy.
+FR-036. The system shall require an explicit access grant before any guest can view a conversation.
+FR-037. The system shall allow an Office Admin to change a conversation's tier only if governance rules permit it.
+FR-038. The system shall record all tier changes in the immutable log.
+
+
+9. Messaging
+
+FR-039. The system shall allow authorized participants to send messages within conversations they can access.
+FR-040. The system shall allow authorized participants to receive messages within conversations they can access.
+FR-041. The system shall prevent message sending by users who no longer have access to the conversation.
+FR-042. The system shall preserve message history subject to governance and dissolution rules.
+FR-043. The system shall support message timestamps and sender identity display.
+FR-044. The system shall support attachments in messages subject to permission rules.
+FR-045. The system shall prevent forwarding of messages by guest users.
+FR-046. The system shall support system-generated governance events inside the conversation history or linked audit view.
+
+
+10. Counterparty and Guest Access
+
+FR-047. The system shall support external counterparties such as lawyers, banks, advisors, and co-investors as guest users.
+FR-048. The system shall ensure a guest can view only the conversations explicitly opened to that guest.
+FR-049. The system shall ensure a guest cannot discover other conversations, members, or counterparties outside granted access.
+FR-050. The system shall ensure a guest cannot browse the office directory beyond the minimum identity information needed for permitted conversations.
+FR-051. The system shall allow an Office Admin to grant access to one or more specific conversations for a guest.
+FR-052. The system shall allow an Office Admin to revoke guest access immediately.
+FR-053. The system shall provide a kill switch for immediate guest disablement.
+FR-054. The system shall log all guest provisioning, access grants, revocations, and kill-switch actions.
+
+
+11. Permissions and Governance Controls
+
+FR-055. The system shall support per-member permissions at office and conversation level.
+FR-056. The system shall support separate permissions for viewing, posting, downloading, inviting participants, and administering a conversation.
+FR-057. The system shall allow the office to control whether a participant may download attachments.
+FR-058. The system shall allow the office to control whether a participant may export or otherwise retrieve conversation data where supported.
+FR-059. The system shall record permission changes in the immutable log.
+FR-060. The system shall prevent users from granting permissions they do not themselves possess.
+
+
+12. Audit and Immutable Log
+
+FR-061. The system shall maintain an immutable audit log of governed actions.
+FR-062. The system shall log conversation creation events.
+FR-063. The system shall log participant addition and removal events.
+FR-064. The system shall log access-grant and access-revocation events.
+FR-065. The system shall log restricted-tier authentication events.
+FR-066. The system shall log attachment download events.
+FR-067. The system shall log screenshot-related events where platform capabilities allow detection or explicit reporting.
+FR-068. The system shall log kill-switch events.
+FR-069. The system shall log dissolution requests and confirmations.
+FR-070. The system shall prevent standard users from editing or deleting audit log entries.
+FR-071. The system shall make the full office audit log available to the principal and authorized Office Admins according to policy.
+
+
+13. Screenshot and Download Governance
+
+FR-072. The system shall support office-defined controls for attachment download permissions.
+FR-073. The system shall record file download actions in the audit log.
+FR-074. The system shall support screenshot governance through watermarking, available screenshot or screen-recording signals, audit logging, and policy deterrence where hard prevention is not platform-enforceable.
+FR-075. The system shall associate screenshot governance events with the user, device, conversation, and timestamp where available.
+FR-076. The system shall make screenshot and download events reviewable in the governance view.
+
+
+14. Bilateral Dissolution
+
+FR-077. The system shall support bilateral dissolution for conversations governed by that rule.
+FR-078. The system shall prevent unilateral deletion of a governed bilateral conversation by one party acting alone.
+FR-079. The system shall require confirmation from both participating sides before bilateral dissolution is completed.
+FR-080. The system shall record the request, pending state, confirmations, and completion outcome of bilateral dissolution.
+FR-081. The system shall make the dissolution state visible to authorized participants.
+
+
+15. File and Document Sharing
+
+FR-082. The system shall allow authorized participants to upload files into permitted conversations.
+FR-083. The system shall apply conversation-tier and participant permission rules to shared files.
+FR-084. The system shall restrict guest access to only those files shared within conversations the guest can access.
+FR-085. The system shall allow the office to disable download rights for selected participants or conversation types.
+FR-086. The system shall log file upload, access, and download events.
+
+
+16. Session and Access Lifecycle
+
+FR-087. The system shall support session timeout for restricted access.
+FR-088. The system shall require hardware-key authentication after restricted-session timeout before access resumes.
+FR-089. The system shall allow office policy to define timeout behavior for restricted sessions.
+FR-090. The system shall terminate active access when a user's role or membership is revoked.
+FR-091. The system shall terminate active guest access immediately when the kill switch is triggered.
+
+
+17. Recovery and Key-Loss Flows
+
+FR-092. The system shall support registration of a backup hardware key for restricted users.
+FR-093. The system shall support an administrative recovery flow for lost primary hardware keys.
+FR-094. The system shall support a recovery flow for loss of both primary device and primary hardware key that requires Office Admin approval and verification through the dedicated recovery SIM or number held in the client recovery kit.
+FR-095. The system shall record recovery-related actions in the audit log.
+FR-096. The system shall allow re-issuance and replacement of hardware-key credentials.
+FR-097. The system shall allow revocation of lost or compromised keys.
+
+
+18. Onboarding and Operational Support
+
+FR-098. The system shall support office onboarding led by SOVEREIGN operators.
+FR-099. The system shall support initial tenant and office setup in a SOVEREIGN-managed SaaS environment.
+FR-100. The system shall support member-by-member provisioning during onboarding.
+FR-101. The system shall support operational handoff to a client IT/admin team after onboarding.
+FR-102. The system shall support continued SOVEREIGN support involvement where contracted.
+FR-103. The system shall record support actions performed by SOVEREIGN operators where those actions affect identity, access, or governance state.
+
+
+19. SaaS Tenant and Office Model
+
+FR-104. The system shall support a SOVEREIGN-managed multi-tenant SaaS deployment model for the first release.
+FR-105. The system shall isolate each tenant and office from every other tenant and office through strict logical tenant isolation.
+FR-106. The system shall support encrypted communication and encrypted data handling inside the managed SaaS environment.
+FR-107. The system shall prevent cross-tenant persistence, querying, caching, and authorization leakage.
+FR-108. The system shall allow office-specific configuration of approved counterparties and office policy settings within a tenant.
+
+
+20. Future Cross-Office / Inter-Instance Groundwork
+
+FR-109. The system shall support data-model and service-boundary groundwork for future cross-office or inter-instance communication without requiring production cross-office messaging in the first release.
+FR-110. The system shall ensure any future cross-office communication model can verify identity and authorization state before communication is established.
+FR-111. The system shall maintain governance records for any future trust or cross-office setup actions implemented in V1 groundwork.
+FR-112. The system shall ensure one tenant or office cannot browse or enumerate another tenant or office outside explicit future grants.
+
+
+21. Administration
+
+FR-113. The system shall provide an admin interface for managing members, roles, devices, guests, conversations, and governance settings.
+FR-114. The system shall provide an audit review interface for authorized users.
+FR-115. The system shall provide a restricted-access policy configuration interface for authorized admins.
+FR-116. The system shall provide controls for revoking users, devices, keys, and guest access.
+FR-117. The system shall provide visibility into current access state for conversations and participants.
+
+
+22. Notifications and User Awareness
+
+FR-118. The system shall notify authorized users in-product when they are added to a conversation.
+FR-119. The system shall notify relevant admins in-product when guest access is granted or revoked.
+FR-120. The system shall notify relevant admins in-product when restricted access fails repeatedly or when a key is revoked.
+FR-121. The system shall notify relevant admins in-product when bilateral dissolution is requested and when it is completed.
+FR-122. The system shall notify relevant admins in-product of kill-switch execution.
+
+
+23. V1 Product Boundaries
+
+FR-123. The system shall focus on governed communication workflows rather than broad endpoint security, email security, or office-wide cyber tooling.
+FR-124. The system shall not require replacement of the client's full IT stack to deliver its core value.
+FR-125. The system shall deliver its core value through identity assurance, conversation governance, restricted access, scoped counterparty participation, and auditability.
+
+
+24. V1 Priority User Journeys
+
+UJ-001. Principal and Office Admin communicate in Confidential conversations for day-to-day sensitive coordination.
+UJ-002. Principal and selected internal members use Restricted conversations for the highest-sensitivity matters.
+UJ-003. Office Admin invites an external lawyer, banker, or advisor into one scoped conversation without exposing the wider office network.
+UJ-004. Office Admin triggers immediate revocation of a guest via kill switch.
+UJ-005. Principal or authorized admin reviews immutable audit history for sensitive access and file activity.
+UJ-006. Restricted user re-enters a timed-out sensitive session using a hardware key.
+
+
+24A. Engineering Task Seeds By Domain
+
+TASK-001. Identity service and onboarding model
+- implement NestJS tenant, identity, invitation, and office-membership modules
+- add PostgreSQL tables for tenant, office, user, membership, invitation, and verification status
+- expose REST endpoints for invite, activate, suspend, remove, role assignment, and passwordless onboarding completion
+- generate TypeScript API contracts for admin console and Swift client consumption
+
+TASK-002. Device and restricted-access foundation
+- implement device enrollment records, approval/revocation flows, and force sign-out handling
+- model hardware-key registrations, backup keys, and restricted-session state
+- add backend guards and policies that deny Restricted content without valid restricted session
+- add SwiftUI lock-state and re-entry flows that never render Restricted content before re-auth succeeds
+
+TASK-003. Conversation, participant, and message core
+- implement conversation, participant, and message modules with tier-aware policies
+- add REST endpoints for create conversation, list conversation, add participant, remove participant, and send message
+- add WebSocket channels for realtime message delivery and thread updates
+- model system governance events as first-class thread timeline items
+
+TASK-004. Guest scope and kill switch
+- implement guest identity, guest scope, guest conversation membership, and immediate revoke flows for guests using the same iOS app surface as internal users
+- ensure backend list and detail endpoints filter all hidden conversations and metadata
+- add admin APIs and UI for scoped grants and kill switch execution
+- invalidate guest sessions and WebSocket connections immediately on revoke or kill switch
+
+TASK-005. Permission engine and policy application
+- implement permission evaluation service for view, post, invite, administer, download, and export
+- store office defaults plus conversation overrides
+- ensure actor authority is validated before policy mutation
+- make effective permissions queryable for UI rendering and audit review
+
+TASK-006. File upload and controlled retrieval
+- implement upload-intent API, object-storage key strategy, and attachment metadata records
+- enforce download permission checks in backend before generating signed retrieval URLs
+- log upload, view, and download events with actor, device, conversation, and attachment references
+- render download-disabled and guest-limited attachment states in client applications
+
+TASK-007. Immutable audit and governance review
+- define audit-event taxonomy for auth, membership, guest, file, tier, policy, dissolution, and support actions
+- implement append-only audit-event persistence and query APIs
+- add admin filters by actor, office, conversation, event type, and time range
+- wire system-generated governance events into thread timeline and audit review surfaces
+
+TASK-008. Bilateral dissolution workflow
+- implement dissolution request, pending, confirm, reject, and complete states
+- block unilateral destructive actions while dissolution is pending
+- expose backend APIs and timeline events for both sides
+- add UI state for request, pending counterpart confirmation, and completion outcome
+
+TASK-009. Recovery and support operations
+- implement backend workflows for key replacement, key revocation, and approved recovery actions using Office Admin approval plus dedicated recovery SIM/number verification for double-loss cases
+- define support-operator APIs with scoped access and explicit audit emission
+- add admin visibility for active devices, keys, recoveries, and support interventions
+- document operational runbooks for onboarding, recovery, and handoff
+
+TASK-010. SaaS tenant readiness and deferred cross-office groundwork
+- package backend, admin console, database, redis, and storage integration for a managed SaaS environment
+- implement tenant isolation, tenant-aware monitoring, and tenant-safe operational controls
+- keep remote-instance trust and cross-office messaging limited to future-compatible data-model groundwork only
+- define deployment, upgrade, rollback, and incident procedures for first-customer SaaS rollout
+
+
+25. Open Functional Decisions Requiring Later Specification
+
+OPEN-001. Final KYC provider selection.
+OPEN-002. Exact iOS integration details for watermarking and screenshot or recording signal handling.
+OPEN-003. Detailed telecom and timeout behavior for the dedicated recovery SIM or number flow.
+OPEN-004. Exact support-mode elevation process when customer-approved access to protected metadata or content is required.
+OPEN-005. Exact rules for who may convert a conversation from one tier to another.
+OPEN-006. Exact support boundary and permissions for SOVEREIGN operators in controlled support mode.
+
+
+End of document.

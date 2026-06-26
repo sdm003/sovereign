@@ -1,0 +1,280 @@
+SOVEREIGN V1
+Backend / Platform Breakdown
+Version 1.1
+
+1. Purpose
+
+This document breaks V1 into backend implementation stories and tasks. It covers the platform capabilities required to enforce governed communications reliably.
+
+
+2. Backend Scope
+
+The backend stream covers:
+- office and membership models
+- auth, device, and restricted-session enforcement
+- conversation, participant, and message services
+- permissions and governance policies
+- guest and kill-switch control
+- file access enforcement
+- audit log
+- bilateral dissolution
+- deferred future cross-office trust groundwork
+- admin and support operations
+
+
+3. Core Backend Domains
+
+DOMAIN-001. Office
+DOMAIN-002. User identity
+DOMAIN-003. Membership and roles
+DOMAIN-004. Devices and keys
+DOMAIN-005. Conversations and participants
+DOMAIN-006. Messages and attachments
+DOMAIN-007. Permissions and policies
+DOMAIN-008. Governance audit events
+DOMAIN-009. Guest access and kill switch
+DOMAIN-010. Dissolution workflows
+DOMAIN-011. Inter-instance trust and communication
+DOMAIN-012. Support and operational actions
+
+
+4. Backend Epics
+
+BE-EPIC-001. Identity and membership platform
+BE-EPIC-002. Conversation and messaging platform
+BE-EPIC-003. Restricted-session enforcement
+BE-EPIC-004. Guest governance platform
+BE-EPIC-005. Audit and compliance event platform
+BE-EPIC-006. File permissions platform
+BE-EPIC-007. Bilateral dissolution state machine
+BE-EPIC-008. SaaS tenant isolation and future cross-office trust groundwork
+BE-EPIC-009. Support and recovery operations
+
+
+5. Backend Stories And Tasks
+
+BE-001. Create office domain model
+- office record
+- office status
+- office configuration settings
+- support-contract mode flags if needed
+- NestJS module, service, controller, and persistence mapping
+- migration for office configuration defaults
+
+BE-002. Create membership and role model
+- internal member states
+- guest states
+- restricted eligibility
+- role-assignment history
+- invitation acceptance linkage
+- audit emission on membership changes
+
+BE-003. Create device registry
+- enrolled devices
+- approval status
+- revocation state
+- device-event history
+- force sign-out linkage
+
+BE-004. Create hardware-key registry
+- primary key
+- backup key
+- key status
+- replacement and revocation history
+- admin mutation endpoints
+
+BE-005. Implement authentication and session services
+- login
+- passwordless invitation and sign-in completion
+- token/session issuance
+- office-bound authorization context
+- force sign-out
+- refresh / revoke flow
+- session invalidation hooks for role, device, and guest changes
+
+BE-006. Implement conversation model
+- Personal / Confidential / Restricted tiers
+- direct and group conversations
+- participant membership model
+- conversation-level policy state
+- conversation creation rules by role and tier
+
+BE-007. Implement messaging service
+- send message
+- list messages
+- system event messages
+- participant access validation
+- pagination and cursor strategy
+- realtime delivery hooks
+
+BE-008. Implement participant-management service
+- add participant
+- remove participant
+- role-based constraints
+- guest-specific constraints
+- immutable record of participant mutations
+
+BE-009. Implement permission engine
+- view, post, invite, administer, download, export permissions
+- office-level defaults
+- conversation overrides
+- validation against actor authority
+- effective permission resolution endpoint or helper
+
+BE-010. Implement restricted-session policy
+- require re-authentication after timeout
+- deny access to Restricted content without valid restricted session
+- emit auth success/failure audit events
+- clear or rotate restricted-session state on timeout and revoke
+
+BE-011. Implement guest provisioning and scoping
+- create guest identity
+- bind guest to explicit conversation scope
+- ensure no wider visibility
+- filter list and detail endpoints against guest scope, with search remaining out of scope for V1
+- restrict guest directory visibility to minimum safe identity data
+
+BE-012. Implement kill-switch behavior
+- immediate guest disablement
+- active-session invalidation
+- WebSocket disconnect / denial on subsequent subscribe
+- audit logging
+- downstream notification event emission
+
+BE-013. Implement attachment and file-permission service
+- upload metadata
+- file ownership
+- conversation linkage
+- download permission checks
+- access-event emission
+- signed upload / download authorization
+
+BE-014. Implement immutable audit-event model
+- event taxonomy
+- append-only semantics
+- actor, office, conversation, device, time references
+- source action and correlation metadata
+
+BE-015. Implement audit query service
+- filter by event type, user, conversation, date range
+- admin-only access control
+- pagination and export strategy if enabled
+- timeline shape suitable for admin UI
+
+BE-016. Implement bilateral dissolution workflow
+- request
+- pending
+- counterpart confirmation
+- completion / rejection / timeout behavior if adopted
+- validation against conversation type and participants
+
+BE-017. Implement support-operator action tracking
+- operator identity
+- scoped support actions
+- explicit operator event logging
+- support-mode feature gating
+
+BE-018. Implement recovery workflows
+- replace lost primary key with approved procedure
+- revoke compromised key
+- restore access after approved recovery path
+- verify double-loss recovery through Office Admin approval plus dedicated recovery SIM/number flow
+- record approvals and recovery steps
+
+BE-019. Implement office configuration service
+- timeout policies
+- guest permissions
+- download policies
+- support-mode configuration
+- validation of policy inheritance and overrides
+
+BE-020. Implement future cross-office trust groundwork model
+- remote office identity
+- approval and trust states
+- scoped conversation linkage
+- shared trust metadata for future use without enabling production cross-office messaging in V1
+
+BE-021. Implement deferred cross-office service boundary groundwork
+- define future-compatible service interfaces without enabling production cross-office message delivery in V1
+- verify remote authorization concepts at the contract layer only
+- prevent tenant or office enumeration through any groundwork endpoints
+- emit governance events for any trust-configuration actions that do exist
+
+BE-022. Implement admin API surface
+- members
+- guests
+- devices
+- keys
+- policies
+- audit access
+- dissolution controls
+- support / recovery actions
+
+BE-023. Implement backend contract and schema package outputs
+- DTO definitions and validation schemas
+- OpenAPI generation
+- event payload definitions for realtime clients
+- versioning approach for admin and iOS consumers
+
+BE-024. Implement backend testing baseline
+- unit tests for policy engine and guards
+- integration tests for role, guest, and Restricted access paths
+- API tests for file, audit, and dissolution workflows
+- regression tests for no-discovery and immutable-audit guarantees
+
+
+6. Suggested Backend API Areas
+
+API-001. Auth and session APIs
+API-002. Member and guest management APIs
+API-003. Device and key management APIs
+API-004. Conversation, participant, and message APIs
+API-005. File and attachment APIs
+API-006. Audit and governance APIs
+API-007. Policy and admin APIs
+API-008. Future cross-office trust groundwork APIs
+API-009. Recovery and support APIs
+API-010. Realtime gateway events and subscription rules
+
+
+7. Suggested Data Entities
+
+ENTITY-001. office
+ENTITY-002. user
+ENTITY-003. membership
+ENTITY-004. invitation
+ENTITY-005. device
+ENTITY-006. hardware_key
+ENTITY-007. conversation
+ENTITY-008. conversation_participant
+ENTITY-009. message
+ENTITY-010. attachment
+ENTITY-011. permission_grant
+ENTITY-012. restricted_session
+ENTITY-013. guest_scope
+ENTITY-014. audit_event
+ENTITY-015. dissolution_request
+ENTITY-016. remote_instance_trust
+ENTITY-017. support_action
+
+
+8. Backend Risk Areas
+
+RISK-BE-001. Leakage of Restricted content due to improper session checks
+RISK-BE-002. Guest enumeration of office data through API shape or metadata
+RISK-BE-003. Mutable or incomplete audit coverage
+RISK-BE-004. Weak coupling between membership changes and active-session invalidation
+RISK-BE-005. Complexity of tenant isolation and future cross-office trust groundwork before first customer rollout
+
+
+9. Suggested Backend Delivery Order
+
+ORDER-BE-001. Office, membership, role, device, and session foundations
+ORDER-BE-002. Conversation, participant, and messaging core
+ORDER-BE-003. Permission engine and file access enforcement
+ORDER-BE-004. Restricted-session policy and key lifecycle
+ORDER-BE-005. Guest scoping and kill switch
+ORDER-BE-006. Immutable audit and governance queries
+ORDER-BE-007. Bilateral dissolution
+ORDER-BE-008. Recovery and support operations
+ORDER-BE-009. Tenant isolation hardening and future cross-office groundwork

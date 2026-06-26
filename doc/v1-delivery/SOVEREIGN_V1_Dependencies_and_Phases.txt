@@ -1,0 +1,254 @@
+SOVEREIGN V1
+Dependencies and Delivery Phases
+Version 1.1
+
+1. Purpose
+
+This document sequences V1 work so later ticket creation can wire dependencies correctly.
+
+
+2. Dependency Principles
+
+DEP-001. Identity and office ownership rules must exist before messaging permissions can be trusted.
+DEP-002. Messaging core must exist before guest scoping and bilateral dissolution can be meaningful.
+DEP-003. Restricted access depends on both identity foundations and thread-level policy enforcement.
+DEP-004. Audit coverage should be built early enough that later features do not need major retrofitting.
+DEP-005. SaaS operational readiness is not a final cleanup task; deployment, tenancy, and ops assumptions affect architecture from the start.
+DEP-006. Shared contracts between backend and admin should stabilize before broad UI implementation.
+DEP-007. Realtime transport should not be introduced before core authorization rules exist for message and thread access.
+
+
+3. Delivery Phase Breakdown
+
+PHASE-1. Product and architecture foundations
+Blocks:
+- all downstream streams
+Includes:
+- finalize role model
+- finalize office and instance model
+- finalize admin-surface assumption
+- finalize event taxonomy
+- finalize delivery and support boundary assumptions
+- lock monorepo layout and package boundaries
+- define API contract generation approach
+- define baseline database schema domains
+Required technical outputs:
+- repository structure
+- architecture decision records
+- initial database entity map
+- backend module map
+- OpenAPI / DTO strategy
+
+PHASE-2. Identity and office administration foundation
+Blocked by:
+- PHASE-1
+Includes:
+- office model
+- member roles
+- device registry
+- auth/session base
+- admin shell
+- invitation lifecycle
+- membership history model
+Blocks:
+- conversation permissions
+- guest lifecycle
+- restricted access
+Required technical outputs:
+- auth and member APIs
+- office / membership tables and migrations
+- admin member-management screens
+- device approval and revoke endpoints
+
+PHASE-3. Messaging and conversation foundation
+Blocked by:
+- PHASE-2
+Includes:
+- conversation tiers
+- direct/group threads
+- message send/receive
+- participant management
+- file upload baseline
+- realtime thread updates
+Blocks:
+- guest scoped access
+- bilateral dissolution
+- governance review linked to conversation state
+Required technical outputs:
+- conversation, participant, and message APIs
+- WebSocket gateway or equivalent realtime transport
+- thread list and thread detail clients
+- attachment metadata and upload-intent flow
+
+PHASE-4. Governance foundation
+Blocked by:
+- PHASE-2
+Parallel with:
+- late PHASE-3 work
+Includes:
+- immutable audit-event pipeline
+- governance query model
+- admin audit review baseline
+- operator action logging
+- event taxonomy implementation
+Blocks:
+- production-grade guest controls
+- production-grade restricted auditability
+- customer trust package
+Required technical outputs:
+- append-only audit-event schema
+- event writer service / interceptor hooks
+- audit query APIs
+- initial audit review UI
+
+PHASE-5. Restricted access
+Blocked by:
+- PHASE-2
+- PHASE-3
+- PHASE-4 baseline
+Includes:
+- hardware-key registry
+- restricted policy enforcement
+- restricted timeout re-entry
+- restricted auth event logging
+- Restricted UI lock states
+Blocks:
+- full Restricted-tier rollout
+Required technical outputs:
+- restricted-session schema
+- backend guards for Restricted content
+- admin key-management APIs
+- SwiftUI re-entry flow
+
+PHASE-6. Guest and counterparty governance
+Blocked by:
+- PHASE-3
+- PHASE-4
+Includes:
+- guest provisioning
+- conversation scoping
+- no-discovery enforcement
+- kill switch
+- guest notifications
+- session and socket invalidation
+Blocks:
+- first external collaboration workflows
+Required technical outputs:
+- guest identity and scope tables
+- guest management APIs
+- no-discovery filters across list/detail endpoints
+- kill-switch action pipeline
+
+PHASE-7. File governance and bilateral dissolution
+Blocked by:
+- PHASE-3
+- PHASE-4
+- PHASE-6 partially
+Includes:
+- download controls
+- file audit coverage
+- bilateral dissolution state machine
+- dissolution UI/backend integration
+- attachment retrieval authorization
+Required technical outputs:
+- file-permission evaluation service
+- signed-download authorization flow
+- dissolution request / confirm / reject APIs
+- client states for pending and completed dissolution
+
+PHASE-8. Recovery, support, and operational hardening
+Blocked by:
+- PHASE-2
+- PHASE-5
+- PHASE-6
+Includes:
+- key recovery
+- support operator boundaries
+- onboarding runbooks
+- incident procedures
+- production alerts
+- customer handoff material
+Required technical outputs:
+- recovery action APIs
+- support-operator audit coverage
+- monitoring and alert rules
+- support and onboarding runbooks
+
+PHASE-9. SaaS production completion and deferred cross-office groundwork
+Blocked by:
+- PHASE-2 through PHASE-8 foundations
+Includes:
+- trust groundwork between future offices or instances
+- tenant isolation hardening
+- deployment packaging
+- backup/restore model
+- readiness checklist
+- upgrade / rollback workflow
+Required technical outputs:
+- remote-office trust groundwork schema and APIs
+- managed SaaS deployment package
+- environment templates
+- backup, restore, and health-check procedures
+
+
+4. Cross-Stream Dependency Matrix
+
+Design depends on:
+- product role definitions
+- architectural assumptions
+- backend response shape for auth, guest, and audit states
+
+Frontend depends on:
+- design IA for efficient execution
+- backend contracts for conversation, auth, guest, and audit models
+- realtime event payload definitions
+
+Backend depends on:
+- product role definitions
+- ops assumptions for SaaS tenancy and support model
+- storage and secrets assumptions
+
+Ops depends on:
+- backend architecture
+- support-boundary decisions
+- KYC and key-lifecycle choices
+- runtime and packaging decisions
+
+
+5. Recommended Initial Epic Creation Order
+
+ORDER-001. Identity, membership, and office administration
+ORDER-002. Conversation model and messaging core
+ORDER-003. Governance audit foundation
+ORDER-004. Restricted access and hardware-key flows
+ORDER-005. Guest / counterparty access and kill switch
+ORDER-006. File governance and download controls
+ORDER-007. Bilateral dissolution
+ORDER-008. Onboarding, recovery, and support operations
+ORDER-009. SaaS deployment, tenant isolation, and deferred cross-office groundwork
+ORDER-010. Design system and client UX polish
+
+
+6. Recommended Story Creation Pattern
+
+For each epic:
+1. Create architecture / model story
+2. Create schema and migration story
+3. Create backend implementation stories
+4. Create contract / DTO story
+5. Create frontend implementation stories
+6. Create design and UX completion story if not already finished
+7. Create observability / ops story
+8. Wire blockers explicitly
+
+
+7. Minimum Definition Of Ready For Any V1 Story
+
+DOR-001. Role impact is clear
+DOR-002. Tier impact is clear
+DOR-003. Permission model is clear
+DOR-004. Audit implications are listed
+DOR-005. Support and recovery implications are listed if applicable
+DOR-006. SaaS tenancy and operations implications are called out if applicable
+DOR-007. API surface or UI state impact is called out if applicable
+DOR-008. Required schema, contracts, and event changes are identified if applicable

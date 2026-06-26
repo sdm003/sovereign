@@ -1,0 +1,227 @@
+SOVEREIGN V1
+Design and UX Breakdown
+Version 1.1
+
+1. Purpose
+
+This document breaks V1 into design-facing stories and tasks. The goal is to define flows, screens, states, and interaction rules before or alongside implementation.
+
+
+2. Design Scope
+
+The design stream covers:
+- product information architecture
+- role-specific user journeys
+- screen-level UI definitions
+- interaction states, warnings, and edge cases
+- design-system decisions needed for secure and high-trust product behavior
+- engineering handoff detail needed for SwiftUI and Next.js implementation
+
+
+3. Primary User Roles To Design For
+
+DESIGN-ROLE-001. Principal
+DESIGN-ROLE-002. Office Admin
+DESIGN-ROLE-003. Internal Member
+DESIGN-ROLE-004. Restricted Member
+DESIGN-ROLE-005. Guest / Counterparty
+DESIGN-ROLE-006. SOVEREIGN Support Operator
+
+
+4. Design Epics
+
+DESIGN-EPIC-001. Core navigation and information architecture
+DESIGN-EPIC-002. Identity, sign-in, and device trust flows
+DESIGN-EPIC-003. Conversation and messaging UX
+DESIGN-EPIC-004. Restricted access UX
+DESIGN-EPIC-005. Guest and counterparty UX
+DESIGN-EPIC-006. Governance and audit UX
+DESIGN-EPIC-007. Admin and support UX
+
+
+5. Design Stories And Tasks
+
+DESIGN-001. Define app information architecture
+- Deliverables:
+  - top-level navigation
+  - screen hierarchy
+  - role-based access map
+  - route inventory for iOS and admin surfaces
+- Engineering handoff:
+  - navigation-state diagram
+  - route / screen identifiers usable in code
+- Notes:
+  - principal/member messaging views and admin/governance views must be intentionally separated
+
+DESIGN-002. Define authentication and onboarding journey
+- Deliverables:
+  - first login
+  - device enrollment
+  - identity-verification status states
+  - invited-user acceptance flow
+- Engineering handoff:
+  - state matrix for pending, approved, suspended, revoked, and expired invitation states
+  - field-level validation and error-copy rules
+
+DESIGN-003. Define office-member lifecycle UX
+- Deliverables:
+  - invite member
+  - pending / active / suspended / removed states
+  - restricted-eligible status presentation
+- Engineering handoff:
+  - admin table states
+  - status badge rules
+  - mutation confirmation patterns
+
+DESIGN-004. Design conversation list and thread views
+- Deliverables:
+  - tier labels
+  - thread metadata
+  - participant summary
+  - empty states
+  - loading and error states
+- Engineering handoff:
+  - message row variants
+  - system-event row variants
+  - skeleton and pagination behavior
+
+DESIGN-005. Design tier-specific thread behavior
+- Deliverables:
+  - Personal thread states
+  - Confidential thread states
+  - Restricted thread states
+- Engineering handoff:
+  - visual rules for locked versus unlocked Restricted state
+  - capability differences by tier and role
+- Notes:
+  - Restricted should feel materially different, not just visually labeled
+
+DESIGN-006. Design restricted-entry experience
+- Deliverables:
+  - locked-state screen
+  - hardware-key prompt
+  - timeout re-entry prompt
+  - failed authentication state
+  - revoked-key state
+- Engineering handoff:
+  - transition timing rules
+  - safe fallback state after cancellation or failure
+  - explicit rule that Restricted content is never rendered before unlock
+
+DESIGN-007. Design guest invite and scoped-access flows
+- Deliverables:
+  - invite external guest
+  - choose permitted thread(s)
+  - guest confirmation state
+  - revoke guest access
+  - kill-switch interaction
+- Engineering handoff:
+  - no-discovery UX rules
+  - guest action suppression matrix
+
+DESIGN-008. Design file-sharing and download-permission states
+- Deliverables:
+  - upload flow
+  - download-disabled state
+  - guest-visible attachment state
+  - audit-linked notices where applicable
+- Engineering handoff:
+  - upload progress states
+  - signed-download pending and denied states
+
+DESIGN-009. Design audit-log review experience
+- Deliverables:
+  - event timeline
+  - filters by user / conversation / event type / date
+  - detail panel for authentication, download, guest, and dissolution events
+- Engineering handoff:
+  - table / timeline variants
+  - filter chips and empty-result behavior
+
+DESIGN-010. Design bilateral dissolution flow
+- Deliverables:
+  - request state
+  - pending counterpart confirmation state
+  - completed state
+  - blocked or expired state if used
+- Engineering handoff:
+  - state diagram aligned with backend workflow
+  - irreversible-action copy for request and confirmation
+
+DESIGN-011. Design admin permissions and policy screens
+- Deliverables:
+  - role management
+  - conversation access management
+  - guest controls
+  - timeout-policy controls
+  - file-permission controls
+- Engineering handoff:
+  - field definitions
+  - mutation confirmation and failure states
+  - policy inheritance and override display rules
+
+DESIGN-012. Design support-operator experience
+- Deliverables:
+  - support actions allowed
+  - support visibility boundaries
+  - operator action-confirmation patterns
+  - audit messaging for support interventions
+- Engineering handoff:
+  - support-only surface or gated states
+  - explicit audit message copy and markers
+
+
+6. Cross-Cutting Design Tasks
+
+DESIGN-013. Define trust cues
+- secure typography, tier markers, lock states, and confirmation language
+- map cues to reusable design tokens and component variants
+
+DESIGN-014. Define warning and irreversible-action patterns
+- for revoke, kill switch, dissolution, and key replacement
+- include modal, sheet, and inline warning variants
+
+DESIGN-015. Define notification patterns
+- invites, revocations, restricted failures, dissolution, key issues
+- specify in-app and admin-surface notification expectations for V1, with push deferred
+
+DESIGN-016. Define accessibility baseline
+- readable hierarchy, contrast, tactile clarity, hardware-key prompt clarity
+- include voiceover / screen-reader labels and keyboard navigation expectations
+
+DESIGN-017. Build initial design system inventory
+- buttons, lists, chips, alerts, approval states, audit event rows, policy forms
+- define component states needed by SwiftUI and web implementations
+
+
+7. Design Outputs Required
+
+OUTPUT-001. Sitemap / information architecture
+OUTPUT-002. Role-based journey maps
+OUTPUT-003. Wireframes for all primary flows
+OUTPUT-004. High-fidelity UI for core messaging and restricted flows
+OUTPUT-005. Component inventory and design tokens
+OUTPUT-006. Interaction spec for edge cases
+OUTPUT-007. State matrix for auth, guest, lock, revoke, and audit workflows
+OUTPUT-008. Engineering handoff notes keyed to route / screen identifiers
+
+
+8. High-Risk Design Questions
+
+RISK-001. How clearly users understand the difference between Confidential and Restricted
+RISK-002. Whether Restricted flow feels secure without feeling unusable
+RISK-003. Whether guest-scoped access is visually obvious enough to avoid mistakes
+RISK-004. Whether audit and governance views remain usable at scale
+RISK-005. Whether admin workflows are separated enough from daily messaging UX
+
+
+9. Recommended Design Sequence
+
+STEP-001. Information architecture
+STEP-002. Role journeys
+STEP-003. Messaging and thread layouts
+STEP-004. Restricted access flows
+STEP-005. Guest and kill-switch flows
+STEP-006. Governance and audit views
+STEP-007. Admin and support views
+STEP-008. Design-system consolidation
