@@ -3,12 +3,18 @@
   "private": true,
   "version": "0.1.0",
   "workspaces": [
-    "apps/admin-console",
-    "services/api",
     "packages/contracts",
-    "packages/ui-admin"
+    "packages/ui-admin",
+    "services/api",
+    "apps/admin-console"
   ],
   "scripts": {
-    "check:structure": "node scripts/check-structure.mjs"
+    "check:structure": "node scripts/check-structure.mjs",
+    "build": "npm run build --workspace @sovereign/api",
+    "test": "npm run test --workspace @sovereign/api"
+  },
+  "devDependencies": {
+    "@types/node": "^22.16.5",
+    "typescript": "^5.8.3"
   }
 }
