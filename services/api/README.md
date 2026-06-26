@@ -9,6 +9,7 @@ V1 responsibilities:
 - conversation, participant, and message policy enforcement
 - audit persistence and review APIs
 - restricted-session and recovery workflows
+- bilateral dissolution workflow
 - signed attachment authorization
 - realtime delivery orchestration
 
@@ -24,6 +25,8 @@ Runtime baseline artifacts introduced during bootstrap:
 - `src/attachment/attachment-schema.ts`
 - `src/device/device-service.ts`
 - `src/device/device-schema.ts`
+- `src/dissolution/dissolution-service.ts`
+- `src/dissolution/dissolution-schema.ts`
 - `src/guest/guest-service.ts`
 - `src/guest/guest-schema.ts`
 - `src/recovery/recovery-service.ts`

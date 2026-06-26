@@ -3,6 +3,7 @@ export * from './audit';
 export * from './attachment';
 export * from './conversation';
 export * from './device';
+export * from './dissolution';
 export * from './guest';
 export * from './onboarding';
 export * from './recovery';
