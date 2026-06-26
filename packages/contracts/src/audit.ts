@@ -56,3 +56,25 @@ export type WriteAuditEventInput = {
   metadata: AuditEventMetadata;
   actorId?: string;
 };
+
+export type AuditQueryParams = {
+  actorId?: string;
+  conversationId?: string;
+  type?: AuditEventType;
+  from?: string;
+  to?: string;
+};
+
+export type AuditReviewListItem = {
+  id: string;
+  tenantId: string;
+  officeId: string;
+  type: AuditEventType;
+  occurredAt: string;
+  actorId?: string;
+  conversationId?: string;
+};
+
+export type AuditReviewDetail = AuditReviewListItem & {
+  metadata: AuditEventMetadata;
+};

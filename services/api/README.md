@@ -18,6 +18,7 @@ Runtime baseline artifacts introduced during bootstrap:
 
 - `.env.example`
 - `src/audit/audit-service.ts`
+- `src/audit/audit-query-service.ts`
 - `src/audit/audit-schema.ts`
 - `src/device/device-service.ts`
 - `src/device/device-schema.ts`

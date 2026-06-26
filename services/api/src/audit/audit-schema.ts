@@ -12,6 +12,16 @@ create table if not exists audit_event (
 create index if not exists audit_event_tenant_time_idx
   on audit_event(tenant_id, occurred_at desc);
 
+create index if not exists audit_event_tenant_actor_time_idx
+  on audit_event(tenant_id, actor_id, occurred_at desc);
+
+create index if not exists audit_event_tenant_type_time_idx
+  on audit_event(tenant_id, type, occurred_at desc);
+
+create index if not exists audit_event_conversation_idx
+  on audit_event((metadata->>'conversationId'), occurred_at desc)
+  where metadata ? 'conversationId';
+
 create or replace function prevent_audit_event_mutation()
 returns trigger as $$
 begin

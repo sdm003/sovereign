@@ -11,3 +11,9 @@ V1 responsibilities:
 - recovery approval and support-elevation controls
 
 This is not an end-user messaging surface in V1.
+
+Current baseline artifacts:
+
+- `src/audit-review.ts` defines the first audit list/detail screen models.
+- Audit review surfaces intentionally expose no export/download action in V1.
+- Backend audit policy remains authoritative; this package only maps review DTOs to admin-facing view state.

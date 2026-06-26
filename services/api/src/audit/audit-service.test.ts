@@ -135,6 +135,18 @@ test('exposes append-only SQL for audit-event persistence', () => {
     auditEventSchemaSql,
     /create index if not exists audit_event_tenant_time_idx/i,
   );
+  assert.match(
+    auditEventSchemaSql,
+    /create index if not exists audit_event_tenant_actor_time_idx/i,
+  );
+  assert.match(
+    auditEventSchemaSql,
+    /create index if not exists audit_event_tenant_type_time_idx/i,
+  );
+  assert.match(
+    auditEventSchemaSql,
+    /create index if not exists audit_event_conversation_idx/i,
+  );
   assert.match(auditEventSchemaSql, /trigger audit_event_no_update/i);
   assert.match(auditEventSchemaSql, /trigger audit_event_no_delete/i);
 });
