@@ -1,18 +1,33 @@
 import Foundation
 @testable import SovereignIOSClient
 
-struct MockConversationClient: ConversationClient {
+final class MockConversationClient: ConversationClient, @unchecked Sendable {
     let conversations: [ConversationSummary]
     let threads: [String: ConversationThread]
     let messages: [String: ThreadMessage]
     let timelineEvents: [String: ThreadTimelineEvent]
+    var dissolutionActions: [DissolutionAction] = []
+    var threadUpdates: [String: ConversationThread] = [:]
+    var actionError: Error?
+
+    init(
+        conversations: [ConversationSummary],
+        threads: [String: ConversationThread],
+        messages: [String: ThreadMessage],
+        timelineEvents: [String: ThreadTimelineEvent]
+    ) {
+        self.conversations = conversations
+        self.threads = threads
+        self.messages = messages
+        self.timelineEvents = timelineEvents
+    }
 
     func fetchConversationList() async throws -> [ConversationSummary] {
         conversations
     }
 
     func fetchConversationThread(conversationId: String) async throws -> ConversationThread {
-        guard let thread = threads[conversationId] else {
+        guard let thread = threadUpdates[conversationId] ?? threads[conversationId] else {
             throw TestClientError.missingThread
         }
 
@@ -33,6 +48,23 @@ struct MockConversationClient: ConversationClient {
         }
 
         return event
+    }
+
+    func submitDissolutionAction(
+        conversationId: String,
+        action: DissolutionAction
+    ) async throws -> ConversationThread {
+        if let actionError {
+            throw actionError
+        }
+
+        dissolutionActions.append(action)
+
+        guard let thread = threadUpdates[conversationId] ?? threads[conversationId] else {
+            throw TestClientError.missingThread
+        }
+
+        return thread
     }
 }
 
@@ -72,4 +104,5 @@ enum TestClientError: Error {
     case missingThread
     case missingMessage
     case missingTimelineEvent
+    case dissolutionDenied
 }

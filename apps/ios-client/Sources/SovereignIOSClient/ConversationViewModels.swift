@@ -34,6 +34,7 @@ public final class ConversationThreadViewModel: ObservableObject {
     @Published public private(set) var isLoading = false
     @Published public private(set) var errorMessage: String?
     @Published public private(set) var connectionId: String?
+    @Published public private(set) var isSubmittingDissolutionAction = false
 
     private let client: ConversationClient
     private let realtimeClient: ConversationRealtimeClient
@@ -79,6 +80,30 @@ public final class ConversationThreadViewModel: ObservableObject {
             errorMessage = "Unable to load this thread."
             isLoading = false
         }
+    }
+
+    public func submitDissolutionAction(_ action: DissolutionAction) async {
+        guard let currentThread = thread else {
+            return
+        }
+        guard currentThread.dissolution.showsAction(action) else {
+            errorMessage = "Dissolution action is not currently available."
+            return
+        }
+
+        isSubmittingDissolutionAction = true
+        errorMessage = nil
+
+        do {
+            thread = try await client.submitDissolutionAction(
+                conversationId: currentThread.conversation.id,
+                action: action
+            )
+        } catch {
+            errorMessage = "Dissolution action was not accepted."
+        }
+
+        isSubmittingDissolutionAction = false
     }
 
     private func enqueue(_ event: ThreadRealtimeEvent) async {
@@ -132,6 +157,7 @@ public final class ConversationThreadViewModel: ObservableObject {
 
             thread = ConversationThread(
                 conversation: currentThread.conversation,
+                dissolution: currentThread.dissolution,
                 items: updatedItems
             )
         } catch {

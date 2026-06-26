@@ -5,6 +5,133 @@ import Testing
 @MainActor
 struct ConversationThreadViewModelTests {
     @Test
+    func mapsDissolutionStatesToThreadBannersAndActions() async throws {
+        let unavailable = DissolutionViewState(
+            status: .notAvailable,
+            allowedActions: []
+        )
+        let available = DissolutionViewState(
+            status: .available,
+            allowedActions: [.request]
+        )
+        let pending = DissolutionViewState(
+            status: .pendingConfirmation(requestedByCurrentUser: true),
+            allowedActions: []
+        )
+        let counterpartPending = DissolutionViewState(
+            status: .pendingConfirmation(requestedByCurrentUser: false),
+            allowedActions: [.confirm, .reject]
+        )
+        let completed = DissolutionViewState(
+            status: .completed,
+            allowedActions: []
+        )
+        let rejected = DissolutionViewState(
+            status: .rejected,
+            allowedActions: [.request]
+        )
+
+        #expect(unavailable.bannerTitle == nil)
+        #expect(!unavailable.showsAction(.request))
+        #expect(available.bannerTitle == "Dissolution available")
+        #expect(available.primaryActionTitle == "Request dissolution")
+        #expect(pending.bannerTitle == "Dissolution pending")
+        #expect(pending.bannerDetail == "Waiting for counterpart confirmation.")
+        #expect(counterpartPending.primaryActionTitle == "Confirm dissolution")
+        #expect(counterpartPending.secondaryActionTitle == "Reject")
+        #expect(completed.bannerTitle == "Dissolution completed")
+        #expect(rejected.bannerTitle == "Dissolution rejected")
+    }
+
+    @Test
+    func submitsDissolutionActionsAndRefreshesAuthoritativeThreadState() async throws {
+        let conversation = ConversationSummary(
+            id: "thread-dissolution",
+            title: "Counterparty Thread",
+            tier: .confidential,
+            participants: [],
+            lastMessagePreview: nil,
+            lastActivityAt: Date(timeIntervalSince1970: 100),
+            unreadCount: 0,
+            accessState: .available
+        )
+        let before = ConversationThread(
+            conversation: conversation,
+            dissolution: DissolutionViewState(status: .available, allowedActions: [.request]),
+            items: []
+        )
+        let after = ConversationThread(
+            conversation: conversation,
+            dissolution: DissolutionViewState(status: .pendingConfirmation(requestedByCurrentUser: true), allowedActions: []),
+            items: [
+                .timeline(
+                    ThreadTimelineEvent(
+                        id: "dissolution-requested",
+                        conversationId: conversation.id,
+                        title: "Dissolution requested",
+                        detail: "Waiting for counterpart confirmation.",
+                        kind: .dissolution(status: .pendingConfirmation(requestedByCurrentUser: true)),
+                        createdAt: Date(timeIntervalSince1970: 120)
+                    )
+                ),
+            ]
+        )
+        let client = MockConversationClient(
+            conversations: [conversation],
+            threads: [conversation.id: before],
+            messages: [:],
+            timelineEvents: [:]
+        )
+        let realtime = MockConversationRealtimeClient()
+        let viewModel = ConversationThreadViewModel(client: client, realtimeClient: realtime)
+
+        await viewModel.load(conversationId: conversation.id)
+        client.threadUpdates[conversation.id] = after
+        await viewModel.submitDissolutionAction(.request)
+
+        #expect(client.dissolutionActions == [.request])
+        #expect(viewModel.thread?.dissolution.status == .pendingConfirmation(requestedByCurrentUser: true))
+        #expect(viewModel.thread?.items.map(\.id) == ["dissolution-requested"])
+        #expect(viewModel.errorMessage == nil)
+    }
+
+    @Test
+    func preservesAuthoritativeStateWhenDissolutionActionIsDenied() async throws {
+        let conversation = ConversationSummary(
+            id: "thread-denied",
+            title: "Denied Thread",
+            tier: .confidential,
+            participants: [],
+            lastMessagePreview: nil,
+            lastActivityAt: Date(timeIntervalSince1970: 100),
+            unreadCount: 0,
+            accessState: .available
+        )
+        let thread = ConversationThread(
+            conversation: conversation,
+            dissolution: DissolutionViewState(status: .available, allowedActions: [.request]),
+            items: []
+        )
+        let client = MockConversationClient(
+            conversations: [conversation],
+            threads: [conversation.id: thread],
+            messages: [:],
+            timelineEvents: [:]
+        )
+        client.actionError = TestClientError.dissolutionDenied
+        let viewModel = ConversationThreadViewModel(
+            client: client,
+            realtimeClient: MockConversationRealtimeClient()
+        )
+
+        await viewModel.load(conversationId: conversation.id)
+        await viewModel.submitDissolutionAction(.request)
+
+        #expect(viewModel.thread?.dissolution.status == .available)
+        #expect(viewModel.errorMessage == "Dissolution action was not accepted.")
+    }
+
+    @Test
     func mapsAttachmentAccessStatesToExplicitClientActions() async throws {
         let allowed = ThreadAttachment(
             id: "attachment-allowed",

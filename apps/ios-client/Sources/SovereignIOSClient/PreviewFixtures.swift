@@ -38,6 +38,10 @@ public enum PreviewFixtures {
     public static let threads: [String: ConversationThread] = [
         availableConversation.id: ConversationThread(
             conversation: availableConversation,
+            dissolution: DissolutionViewState(
+                status: .pendingConfirmation(requestedByCurrentUser: false),
+                allowedActions: [.confirm, .reject]
+            ),
             items: [
                 .timeline(
                     ThreadTimelineEvent(
@@ -46,6 +50,16 @@ public enum PreviewFixtures {
                         title: "Participant invited",
                         detail: "Elena joined as a guest participant.",
                         createdAt: Date(timeIntervalSince1970: 1_714_999_700)
+                    )
+                ),
+                .timeline(
+                    ThreadTimelineEvent(
+                        id: "dissolution-timeline-1",
+                        conversationId: availableConversation.id,
+                        title: "Dissolution requested",
+                        detail: "Review and confirm or reject this request.",
+                        kind: .dissolution(status: .pendingConfirmation(requestedByCurrentUser: false)),
+                        createdAt: Date(timeIntervalSince1970: 1_714_999_800)
                     )
                 ),
                 .message(

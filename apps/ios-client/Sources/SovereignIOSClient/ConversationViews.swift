@@ -166,6 +166,7 @@ public struct ConversationThreadView: View {
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 12) {
                             header(for: thread.conversation)
+                            dissolutionBanner(thread.dissolution)
 
                             ForEach(thread.items) { item in
                                 switch item {
@@ -204,6 +205,45 @@ public struct ConversationThreadView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+        }
+    }
+
+    @ViewBuilder
+    private func dissolutionBanner(_ dissolution: DissolutionViewState) -> some View {
+        if let title = dissolution.bannerTitle {
+            VStack(alignment: .leading, spacing: 8) {
+                Label(title, systemImage: "person.2.badge.gearshape")
+                    .font(.subheadline.weight(.semibold))
+                if let detail = dissolution.bannerDetail {
+                    Text(detail)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                HStack {
+                    if let primaryActionTitle = dissolution.primaryActionTitle {
+                        Button(primaryActionTitle) {
+                            let action: DissolutionAction = dissolution.showsAction(.confirm) ? .confirm : .request
+                            Task {
+                                await viewModel.submitDissolutionAction(action)
+                            }
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(viewModel.isSubmittingDissolutionAction)
+                    }
+                    if let secondaryActionTitle = dissolution.secondaryActionTitle {
+                        Button(secondaryActionTitle) {
+                            Task {
+                                await viewModel.submitDissolutionAction(.reject)
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(viewModel.isSubmittingDissolutionAction)
+                    }
+                }
+            }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
         }
     }
 
@@ -273,7 +313,7 @@ public struct ConversationThreadView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(event.title)
                 .font(.footnote.weight(.semibold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(timelineForeground(for: event))
             if let detail = event.detail {
                 Text(detail)
                     .font(.footnote)
@@ -287,6 +327,15 @@ public struct ConversationThreadView: View {
         .padding(.vertical, 10)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func timelineForeground(for event: ThreadTimelineEvent) -> Color {
+        switch event.kind {
+        case .generic:
+            .secondary
+        case .dissolution:
+            .orange
+        }
     }
 }
 

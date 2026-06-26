@@ -20,6 +20,10 @@ public protocol ConversationClient: Sendable {
     func fetchConversationThread(conversationId: String) async throws -> ConversationThread
     func fetchMessage(conversationId: String, messageId: String) async throws -> ThreadMessage
     func fetchTimelineEvent(conversationId: String, eventId: String) async throws -> ThreadTimelineEvent
+    func submitDissolutionAction(
+        conversationId: String,
+        action: DissolutionAction
+    ) async throws -> ConversationThread
 }
 
 public protocol ConversationRealtimeClient: Sendable {
@@ -87,6 +91,14 @@ public struct PreviewConversationClient: ConversationClient {
         }
 
         return event
+    }
+
+    public func submitDissolutionAction(
+        conversationId: String,
+        action: DissolutionAction
+    ) async throws -> ConversationThread {
+        _ = action
+        return try await fetchConversationThread(conversationId: conversationId)
     }
 }
 

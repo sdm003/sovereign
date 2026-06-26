@@ -9,6 +9,7 @@ Current scope:
 - restricted locked-state and re-entry messaging
 - realtime message and timeline event handling in the thread view model
 - explicit attachment access states for allowed, disabled, and hidden files
+- bilateral dissolution banners, action states, and timeline rendering
 - preview fixtures and package tests for the initial messaging experience
 
 Not yet included:
@@ -16,4 +17,4 @@ Not yet included:
 - Xcode app shell and navigation composition
 - real API transport, auth storage, and websocket wiring
 - attachment upload composition and real download transport
-- bilateral dissolution end-user flows
+- production dissolution API transport

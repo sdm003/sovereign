@@ -113,10 +113,16 @@ public struct ConversationSummary: Identifiable, Equatable, Sendable {
 
 public struct ConversationThread: Equatable, Sendable {
     public let conversation: ConversationSummary
+    public let dissolution: DissolutionViewState
     public let items: [ConversationThreadItem]
 
-    public init(conversation: ConversationSummary, items: [ConversationThreadItem]) {
+    public init(
+        conversation: ConversationSummary,
+        dissolution: DissolutionViewState = DissolutionViewState(status: .notAvailable, allowedActions: []),
+        items: [ConversationThreadItem]
+    ) {
         self.conversation = conversation
+        self.dissolution = dissolution
         self.items = items.sorted { $0.createdAt < $1.createdAt }
     }
 }
@@ -248,6 +254,7 @@ public struct ThreadTimelineEvent: Identifiable, Equatable, Sendable {
     public let conversationId: String
     public let title: String
     public let detail: String?
+    public let kind: ThreadTimelineEventKind
     public let createdAt: Date
 
     public init(
@@ -255,12 +262,93 @@ public struct ThreadTimelineEvent: Identifiable, Equatable, Sendable {
         conversationId: String,
         title: String,
         detail: String?,
+        kind: ThreadTimelineEventKind = .generic,
         createdAt: Date
     ) {
         self.id = id
         self.conversationId = conversationId
         self.title = title
         self.detail = detail
+        self.kind = kind
         self.createdAt = createdAt
+    }
+}
+
+public enum ThreadTimelineEventKind: Equatable, Sendable {
+    case generic
+    case dissolution(status: DissolutionStatus)
+}
+
+public enum DissolutionAction: String, CaseIterable, Equatable, Sendable {
+    case request
+    case confirm
+    case reject
+}
+
+public enum DissolutionStatus: Equatable, Sendable {
+    case notAvailable
+    case available
+    case pendingConfirmation(requestedByCurrentUser: Bool)
+    case completed
+    case rejected
+}
+
+public struct DissolutionViewState: Equatable, Sendable {
+    public let status: DissolutionStatus
+    public let allowedActions: Set<DissolutionAction>
+
+    public init(status: DissolutionStatus, allowedActions: Set<DissolutionAction>) {
+        self.status = status
+        self.allowedActions = allowedActions
+    }
+
+    public func showsAction(_ action: DissolutionAction) -> Bool {
+        allowedActions.contains(action)
+    }
+
+    public var bannerTitle: String? {
+        switch status {
+        case .notAvailable:
+            nil
+        case .available:
+            "Dissolution available"
+        case .pendingConfirmation:
+            "Dissolution pending"
+        case .completed:
+            "Dissolution completed"
+        case .rejected:
+            "Dissolution rejected"
+        }
+    }
+
+    public var bannerDetail: String? {
+        switch status {
+        case .notAvailable:
+            nil
+        case .available:
+            "This conversation can be closed only through bilateral confirmation."
+        case let .pendingConfirmation(requestedByCurrentUser):
+            requestedByCurrentUser
+                ? "Waiting for counterpart confirmation."
+                : "Review the counterpart request before confirming or rejecting."
+        case .completed:
+            "This conversation has been closed through governed dissolution."
+        case .rejected:
+            "The last dissolution request was rejected."
+        }
+    }
+
+    public var primaryActionTitle: String? {
+        if showsAction(.confirm) {
+            return "Confirm dissolution"
+        }
+        if showsAction(.request) {
+            return "Request dissolution"
+        }
+        return nil
+    }
+
+    public var secondaryActionTitle: String? {
+        showsAction(.reject) ? "Reject" : nil
     }
 }
