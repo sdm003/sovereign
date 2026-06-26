@@ -23,6 +23,8 @@ Runtime baseline artifacts introduced during bootstrap:
 - `src/device/device-schema.ts`
 - `src/recovery/recovery-service.ts`
 - `src/recovery/recovery-schema.ts`
+- `src/realtime/realtime-service.ts`
+- `src/realtime/realtime-schema.ts`
 - `src/restricted/restricted-access-service.ts`
 - `src/restricted/restricted-access-schema.ts`
 - `src/runtime/runtime-config.ts`

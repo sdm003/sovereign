@@ -4,6 +4,7 @@ export * from './conversation';
 export * from './device';
 export * from './onboarding';
 export * from './recovery';
+export * from './realtime';
 export * from './restricted';
 export * from './runtime';
 export * from './tenancy';
