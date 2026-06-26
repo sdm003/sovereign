@@ -21,5 +21,7 @@ Runtime baseline artifacts introduced during bootstrap:
 - `src/audit/audit-schema.ts`
 - `src/device/device-service.ts`
 - `src/device/device-schema.ts`
+- `src/restricted/restricted-access-service.ts`
+- `src/restricted/restricted-access-schema.ts`
 - `src/runtime/runtime-config.ts`
 - `src/runtime/runtime-schema.ts`

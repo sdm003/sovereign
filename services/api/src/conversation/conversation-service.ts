@@ -87,6 +87,15 @@ type ConversationRepository = Pick<
   | 'getParticipants'
 >;
 
+type RestrictedAccessGuard = {
+  assertRestrictedAccess: (input: {
+    tenantId: string;
+    officeId: string;
+    userId: string;
+    conversationTier: Conversation['tier'];
+  }) => Promise<void>;
+};
+
 type ListInput = {
   tenantId: string;
   userId: string;
@@ -107,6 +116,9 @@ export class ConversationService {
   constructor(
     private readonly repository: ConversationRepository,
     private readonly tenancyRepository: TenancyRepository,
+    private readonly restrictedAccessGuard: RestrictedAccessGuard = {
+      assertRestrictedAccess: async () => undefined,
+    },
     private readonly clock: Clock = defaultClock,
   ) {}
 
@@ -182,6 +194,18 @@ export class ConversationService {
     for (const conversation of conversations) {
       const participants = await this.repository.getParticipants(conversation.id);
       if (participants.some((participant) => participant.userId === input.userId)) {
+        if (conversation.tier === 'restricted') {
+          try {
+            await this.restrictedAccessGuard.assertRestrictedAccess({
+              tenantId: conversation.tenantId,
+              officeId: conversation.officeId,
+              userId: input.userId,
+              conversationTier: conversation.tier,
+            });
+          } catch {
+            continue;
+          }
+        }
         visible.push(this.toResponse(conversation, participants));
       }
     }
@@ -206,6 +230,13 @@ export class ConversationService {
       );
     }
 
+    await this.restrictedAccessGuard.assertRestrictedAccess({
+      tenantId: conversation.tenantId,
+      officeId: conversation.officeId,
+      userId: input.userId,
+      conversationTier: conversation.tier,
+    });
+
     return this.toResponse(conversation, participants);
   }
 
@@ -221,6 +252,12 @@ export class ConversationService {
     }
 
     await this.assertActorParticipant(input);
+    await this.restrictedAccessGuard.assertRestrictedAccess({
+      tenantId: conversation.tenantId,
+      officeId: conversation.officeId,
+      userId: input.actorUserId,
+      conversationTier: conversation.tier,
+    });
     const participants = await this.repository.getParticipants(conversation.id);
     if (participants.some((participant) => participant.userId === input.participantUserId)) {
       return this.toResponse(conversation, participants);
@@ -264,6 +301,12 @@ export class ConversationService {
     }
 
     await this.assertActorParticipant(input);
+    await this.restrictedAccessGuard.assertRestrictedAccess({
+      tenantId: conversation.tenantId,
+      officeId: conversation.officeId,
+      userId: input.actorUserId,
+      conversationTier: conversation.tier,
+    });
     const participants = await this.repository.getParticipants(conversation.id);
     const nextParticipants = participants.filter(
       (participant) => participant.userId !== input.participantUserId,
