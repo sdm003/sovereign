@@ -67,6 +67,15 @@ export class InMemoryDeviceRepository {
 
     return null;
   }
+
+  async listByTenantAndUser(
+    tenantId: string,
+    userId: string,
+  ): Promise<DeviceRecord[]> {
+    return Array.from(this.devices.values())
+      .filter((device) => device.tenantId === tenantId && device.userId === userId)
+      .map((device) => cloneDeviceRecord(device));
+  }
 }
 
 export class InMemorySessionRepository {
@@ -94,7 +103,11 @@ type TenancyRepository = Pick<
 
 type DeviceRepository = Pick<
   InMemoryDeviceRepository,
-  'create' | 'save' | 'getById' | 'findByTenantUserAndClientDevice'
+  | 'create'
+  | 'save'
+  | 'getById'
+  | 'findByTenantUserAndClientDevice'
+  | 'listByTenantAndUser'
 >;
 
 type SessionRepository = Pick<
@@ -333,6 +346,18 @@ export class DeviceRegistryService {
     });
 
     return cloneDeviceRecord(revokedDevice);
+  }
+
+  async getDevice(deviceId: string): Promise<DeviceRecord | null> {
+    return this.repository.getById(deviceId);
+  }
+
+  async listUserDeviceIds(
+    tenantId: string,
+    userId: string,
+  ): Promise<string[]> {
+    const devices = await this.repository.listByTenantAndUser(tenantId, userId);
+    return devices.filter((device) => device.status !== 'revoked').map((device) => device.id);
   }
 
   private async requireDevice(

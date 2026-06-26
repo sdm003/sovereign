@@ -232,6 +232,11 @@ export class HardwareKeyRegistryService {
     return this.repository.getById(keyId);
   }
 
+  async listUserKeyIds(tenantId: string, userId: string): Promise<string[]> {
+    const keys = await this.repository.listByUser(tenantId, userId);
+    return keys.filter((key) => key.status !== 'revoked').map((key) => key.id);
+  }
+
   async assertApprovedDevice(
     tenantId: string,
     deviceId: string,

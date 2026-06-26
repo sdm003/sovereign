@@ -18,6 +18,8 @@ export const auditEventTypes = [
   'dissolution.requested',
   'dissolution.resolved',
   'recovery.requested',
+  'recovery.admin_approved',
+  'recovery.sim_verified',
   'recovery.completed',
   'support.elevation_requested',
   'support.elevation_revoked',

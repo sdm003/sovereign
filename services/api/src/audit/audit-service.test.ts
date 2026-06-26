@@ -30,6 +30,8 @@ test('covers the required governance domains in the audit taxonomy', () => {
     'dissolution.requested',
     'dissolution.resolved',
     'recovery.requested',
+    'recovery.admin_approved',
+    'recovery.sim_verified',
     'recovery.completed',
     'support.elevation_requested',
     'support.elevation_revoked',
