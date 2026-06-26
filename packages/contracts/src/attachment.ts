@@ -1,4 +1,10 @@
 export type AttachmentStatus = 'upload_pending' | 'available';
+export type AttachmentAccessState = 'allowed' | 'download_disabled' | 'not_visible';
+export type AttachmentAccessReason =
+  | 'participant_allowed'
+  | 'guest_scope_allowed'
+  | 'attachment_not_finalized'
+  | 'conversation_not_visible';
 
 export type Attachment = {
   id: string;
@@ -49,4 +55,11 @@ export type SignedAttachmentDownload = {
   attachmentId: string;
   downloadUrl: string;
   expiresAt: string;
+};
+
+export type AttachmentAccessEvaluation = {
+  attachmentId: string;
+  state: AttachmentAccessState;
+  canDownload: boolean;
+  reason: AttachmentAccessReason;
 };

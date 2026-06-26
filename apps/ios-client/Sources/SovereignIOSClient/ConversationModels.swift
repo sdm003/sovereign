@@ -142,6 +142,77 @@ public enum ConversationThreadItem: Identifiable, Equatable, Sendable {
             return event.createdAt
         }
     }
+
+    public var message: ThreadMessage? {
+        switch self {
+        case let .message(message):
+            message
+        case .timeline:
+            nil
+        }
+    }
+}
+
+public enum AttachmentAccessState: Equatable, Sendable {
+    case allowed
+    case downloadDisabled(reason: String)
+    case notVisible
+}
+
+public struct ThreadAttachment: Identifiable, Equatable, Sendable {
+    public let id: String
+    public let filename: String
+    public let contentType: String
+    public let byteSize: Int
+    public let accessState: AttachmentAccessState
+
+    public init(
+        id: String,
+        filename: String,
+        contentType: String,
+        byteSize: Int,
+        accessState: AttachmentAccessState
+    ) {
+        self.id = id
+        self.filename = filename
+        self.contentType = contentType
+        self.byteSize = byteSize
+        self.accessState = accessState
+    }
+
+    public var isDownloadEnabled: Bool {
+        accessState == .allowed
+    }
+
+    public var accessoryTitle: String {
+        switch accessState {
+        case .allowed:
+            "Download"
+        case .downloadDisabled:
+            "Download unavailable"
+        case .notVisible:
+            "Hidden"
+        }
+    }
+
+    public var stateDetail: String? {
+        switch accessState {
+        case .allowed:
+            nil
+        case let .downloadDisabled(reason):
+            reason
+        case .notVisible:
+            "This attachment is not visible to your account."
+        }
+    }
+}
+
+public extension Array where Element == ThreadAttachment {
+    var visibleToUser: [ThreadAttachment] {
+        filter { attachment in
+            attachment.accessState != .notVisible
+        }
+    }
 }
 
 public struct ThreadMessage: Identifiable, Equatable, Sendable {
@@ -150,6 +221,7 @@ public struct ThreadMessage: Identifiable, Equatable, Sendable {
     public let senderDisplayName: String
     public let senderKind: ParticipantKind
     public let body: String
+    public let attachments: [ThreadAttachment]
     public let createdAt: Date
 
     public init(
@@ -158,6 +230,7 @@ public struct ThreadMessage: Identifiable, Equatable, Sendable {
         senderDisplayName: String,
         senderKind: ParticipantKind,
         body: String,
+        attachments: [ThreadAttachment] = [],
         createdAt: Date
     ) {
         self.id = id
@@ -165,6 +238,7 @@ public struct ThreadMessage: Identifiable, Equatable, Sendable {
         self.senderDisplayName = senderDisplayName
         self.senderKind = senderKind
         self.body = body
+        self.attachments = attachments.visibleToUser
         self.createdAt = createdAt
     }
 }

@@ -16,6 +16,7 @@ import {
   ConversationService,
   InMemoryConversationRepository,
 } from '../conversation';
+import { GuestAccessService, InMemoryGuestAccessRepository } from '../guest';
 import { InMemoryTenancyRepository, TenancyService } from '../tenancy';
 
 async function createFixture() {
@@ -48,17 +49,50 @@ async function createFixture() {
     role: 'member',
     status: 'active',
   });
+  await tenancyService.createMembership({
+    tenantId: tenant.id,
+    officeId: office.id,
+    userId: 'guest-1',
+    role: 'guest',
+    status: 'active',
+  });
 
   const conversationRepository = new InMemoryConversationRepository();
+  const auditRepository = new InMemoryAuditEventRepository();
+  const auditTimestamps = [
+    '2026-06-26T11:40:00.000Z',
+    '2026-06-26T11:41:00.000Z',
+    '2026-06-26T11:42:00.000Z',
+    '2026-06-26T11:43:00.000Z',
+    '2026-06-26T11:44:00.000Z',
+    '2026-06-26T11:45:00.000Z',
+    '2026-06-26T11:46:00.000Z',
+    '2026-06-26T11:47:00.000Z',
+  ];
+  const auditService = new AuditEventService(auditRepository, {
+    now: () =>
+      new Date(auditTimestamps.shift() ?? '2026-06-26T11:48:00.000Z'),
+  });
+  const guestService = new GuestAccessService(
+    new InMemoryGuestAccessRepository(),
+    tenancyRepository,
+    conversationRepository,
+    auditService,
+    {
+      now: () => new Date('2026-06-26T11:40:00.000Z'),
+    },
+  );
   const conversationService = new ConversationService(
     conversationRepository,
     tenancyRepository,
+    undefined,
+    guestService,
   );
   const conversation = await conversationService.createConversation({
     tenantId: tenant.id,
     actorUserId: 'principal-1',
     tier: 'confidential',
-    participantIds: ['member-1'],
+    participantIds: ['member-1', 'guest-1'],
   });
   const privateConversation = await conversationService.createConversation({
     tenantId: tenant.id,
@@ -67,16 +101,6 @@ async function createFixture() {
     participantIds: [],
   });
 
-  const auditRepository = new InMemoryAuditEventRepository();
-  const auditTimestamps = [
-    '2026-06-26T11:40:00.000Z',
-    '2026-06-26T11:41:00.000Z',
-    '2026-06-26T11:42:00.000Z',
-  ];
-  const auditService = new AuditEventService(auditRepository, {
-    now: () =>
-      new Date(auditTimestamps.shift() ?? '2026-06-26T11:43:00.000Z'),
-  });
   const attachmentRepository = new InMemoryAttachmentRepository();
   const signer = new DeterministicStorageSigner();
   const attachmentService = new AttachmentService(
@@ -94,6 +118,7 @@ async function createFixture() {
     attachmentService,
     auditService,
     conversation,
+    guestService,
     privateConversation,
     signer,
     tenant,
@@ -171,6 +196,117 @@ test('finalizes attachment metadata and authorizes signed downloads', async () =
   );
 });
 
+test('evaluates explicit attachment access states and denies signed URLs for hidden files', async () => {
+  const { attachmentService, auditService, conversation, guestService, tenant } =
+    await createFixture();
+  const intent = await attachmentService.createUploadIntent({
+    tenantId: tenant.id,
+    actorUserId: 'member-1',
+    conversationId: conversation.id,
+    filename: 'policy.pdf',
+    contentType: 'application/pdf',
+    byteSize: 10,
+  });
+  await attachmentService.finalizeAttachment({
+    tenantId: tenant.id,
+    actorUserId: 'member-1',
+    attachmentId: intent.attachmentId,
+  });
+  await guestService.createGuestIdentity({
+    tenantId: tenant.id,
+    officeId: conversation.officeId,
+    actorUserId: 'principal-1',
+    guestUserId: 'guest-1',
+    displayName: 'External Counsel',
+  });
+
+  assert.deepEqual(
+    await attachmentService.evaluateAttachmentAccess({
+      tenantId: tenant.id,
+      actorUserId: 'member-1',
+      attachmentId: intent.attachmentId,
+    }),
+    {
+      attachmentId: intent.attachmentId,
+      state: 'allowed',
+      canDownload: true,
+      reason: 'participant_allowed',
+    },
+  );
+  assert.deepEqual(
+    await attachmentService.evaluateAttachmentAccess({
+      tenantId: tenant.id,
+      actorUserId: 'guest-1',
+      attachmentId: intent.attachmentId,
+    }),
+    {
+      attachmentId: intent.attachmentId,
+      state: 'not_visible',
+      canDownload: false,
+      reason: 'conversation_not_visible',
+    },
+  );
+  await assert.rejects(
+    attachmentService.authorizeDownload({
+      tenantId: tenant.id,
+      actorUserId: 'guest-1',
+      attachmentId: intent.attachmentId,
+    }),
+    (error: unknown) =>
+      error instanceof AttachmentPipelineError &&
+      error.code === 'ATTACHMENT_ACCESS_DENIED',
+  );
+  assert.deepEqual(
+    (await auditService.listTenantEvents(tenant.id)).map((event) => event.type),
+    [
+      'file.access_denied',
+      'guest.identity_created',
+      'file.attachment_finalized',
+      'file.upload_intent_created',
+    ],
+  );
+});
+
+test('reports guest-limited and pending upload states without issuing downloads', async () => {
+  const { attachmentService, conversation, guestService, tenant } =
+    await createFixture();
+  const intent = await attachmentService.createUploadIntent({
+    tenantId: tenant.id,
+    actorUserId: 'member-1',
+    conversationId: conversation.id,
+    filename: 'pending.pdf',
+    contentType: 'application/pdf',
+    byteSize: 10,
+  });
+  await guestService.createGuestIdentity({
+    tenantId: tenant.id,
+    officeId: conversation.officeId,
+    actorUserId: 'principal-1',
+    guestUserId: 'guest-1',
+  });
+  await guestService.grantConversationScopes({
+    tenantId: tenant.id,
+    officeId: conversation.officeId,
+    actorUserId: 'principal-1',
+    guestUserId: 'guest-1',
+    conversationIds: [conversation.id],
+  });
+
+  assert.deepEqual(
+    await attachmentService.evaluateAttachmentAccess({
+      tenantId: tenant.id,
+      actorUserId: 'guest-1',
+      attachmentId: intent.attachmentId,
+    }),
+    {
+      attachmentId: intent.attachmentId,
+      state: 'download_disabled',
+      canDownload: false,
+      reason: 'attachment_not_finalized',
+    },
+  );
+});
+
 test('denies upload and download when the actor cannot access the conversation', async () => {
   const { attachmentService, conversation, privateConversation, tenant } =
     await createFixture();
@@ -210,8 +346,8 @@ test('denies upload and download when the actor cannot access the conversation',
       attachmentId: attachment.id,
     }),
     (error: unknown) =>
-      error instanceof ConversationPolicyError &&
-      error.code === 'CONVERSATION_ACCESS_DENIED',
+      error instanceof AttachmentPipelineError &&
+      error.code === 'ATTACHMENT_ACCESS_DENIED',
   );
 });
 

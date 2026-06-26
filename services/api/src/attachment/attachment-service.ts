@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import type {
   Attachment,
+  AttachmentAccessEvaluation,
   AuthorizeAttachmentDownloadRequest,
   CreateUploadIntentRequest,
   FinalizeAttachmentRequest,
@@ -10,7 +11,7 @@ import type {
 } from '@sovereign/contracts';
 
 import type { AuditEventService } from '../audit';
-import type { ConversationService } from '../conversation';
+import { ConversationPolicyError, type ConversationService } from '../conversation';
 
 type Clock = {
   now: () => Date;
@@ -41,6 +42,7 @@ export class AttachmentPipelineError extends Error {
       | 'ATTACHMENT_NOT_FOUND'
       | 'ATTACHMENT_NOT_FINALIZED'
       | 'ATTACHMENT_ALREADY_FINALIZED'
+      | 'ATTACHMENT_ACCESS_DENIED'
       | 'INVALID_ATTACHMENT_INPUT',
     message: string,
   ) {
@@ -207,6 +209,25 @@ export class AttachmentService {
       input.attachmentId,
     );
 
+    const access = await this.evaluateAttachmentAccess(input);
+    if (access.state === 'not_visible') {
+      await this.auditService.writeEvent({
+        tenantId: input.tenantId,
+        officeId: attachment.officeId,
+        actorId: input.actorUserId,
+        type: 'file.access_denied',
+        metadata: {
+          attachmentId: attachment.id,
+          conversationId: attachment.conversationId,
+          reason: access.reason,
+        },
+      });
+      throw new AttachmentPipelineError(
+        'ATTACHMENT_ACCESS_DENIED',
+        'Attachment is not visible to this actor.',
+      );
+    }
+
     if (attachment.status !== 'available') {
       throw new AttachmentPipelineError(
         'ATTACHMENT_NOT_FINALIZED',
@@ -214,7 +235,6 @@ export class AttachmentService {
       );
     }
 
-    await this.requireConversationAccess(input, attachment);
     const expiresAt = expiresAtFrom(this.clock.now());
     const downloadUrl = await this.storageSigner.createDownloadUrl({
       storageKey: attachment.storageKey,
@@ -264,6 +284,45 @@ export class AttachmentService {
     return freezeAttachment(cloneAttachment(attachment));
   }
 
+  async evaluateAttachmentAccess(input: {
+    tenantId: string;
+    actorUserId: string;
+    attachmentId: string;
+  }): Promise<AttachmentAccessEvaluation> {
+    const attachment = await this.requireAttachment(
+      input.tenantId,
+      input.attachmentId,
+    );
+    const conversation = await this.evaluateConversationAccess(input, attachment);
+
+    if (!conversation.visible) {
+      return Object.freeze({
+        attachmentId: attachment.id,
+        state: 'not_visible',
+        canDownload: false,
+        reason: 'conversation_not_visible',
+      });
+    }
+
+    if (attachment.status !== 'available') {
+      return Object.freeze({
+        attachmentId: attachment.id,
+        state: 'download_disabled',
+        canDownload: false,
+        reason: 'attachment_not_finalized',
+      });
+    }
+
+    return Object.freeze({
+      attachmentId: attachment.id,
+      state: 'allowed',
+      canDownload: true,
+      reason: conversation.guestLimited
+        ? 'guest_scope_allowed'
+        : 'participant_allowed',
+    });
+  }
+
   private async requireAttachment(
     tenantId: string,
     attachmentId: string,
@@ -289,6 +348,32 @@ export class AttachmentService {
       userId: input.actorUserId,
       conversationId: attachment.conversationId,
     });
+  }
+
+  private async evaluateConversationAccess(
+    input: { tenantId: string; actorUserId: string },
+    attachment: Attachment,
+  ): Promise<{ visible: boolean; guestLimited: boolean }> {
+    try {
+      const conversation = await this.conversationService.getConversation({
+        tenantId: input.tenantId,
+        userId: input.actorUserId,
+        conversationId: attachment.conversationId,
+      });
+
+      return {
+        visible: true,
+        guestLimited:
+          conversation.participantIds.length === 1 &&
+          conversation.participantIds[0] === input.actorUserId &&
+          attachment.uploadedBy !== input.actorUserId,
+      };
+    } catch (error: unknown) {
+      if (error instanceof ConversationPolicyError) {
+        return { visible: false, guestLimited: false };
+      }
+      throw error;
+    }
   }
 }
 

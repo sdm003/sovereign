@@ -30,6 +30,7 @@ test('covers the required governance domains in the audit taxonomy', () => {
     'file.attachment_finalized',
     'file.metadata_viewed',
     'file.download_authorized',
+    'file.access_denied',
     'tier.conversation_tier_changed',
     'dissolution.requested',
     'dissolution.resolved',

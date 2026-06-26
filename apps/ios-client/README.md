@@ -8,11 +8,12 @@ Current scope:
 - tier badge and participant summary presentation
 - restricted locked-state and re-entry messaging
 - realtime message and timeline event handling in the thread view model
+- explicit attachment access states for allowed, disabled, and hidden files
 - preview fixtures and package tests for the initial messaging experience
 
 Not yet included:
 
 - Xcode app shell and navigation composition
 - real API transport, auth storage, and websocket wiring
-- attachment upload/download UX
+- attachment upload composition and real download transport
 - bilateral dissolution end-user flows

@@ -10,7 +10,7 @@ V1 responsibilities:
 - audit persistence and review APIs
 - restricted-session and recovery workflows
 - bilateral dissolution workflow
-- signed attachment authorization
+- signed attachment authorization and access-state enforcement
 - realtime delivery orchestration
 
 The backend remains the source of truth for policy-sensitive decisions.

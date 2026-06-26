@@ -5,6 +5,39 @@ import Testing
 @MainActor
 struct ConversationThreadViewModelTests {
     @Test
+    func mapsAttachmentAccessStatesToExplicitClientActions() async throws {
+        let allowed = ThreadAttachment(
+            id: "attachment-allowed",
+            filename: "passport.pdf",
+            contentType: "application/pdf",
+            byteSize: 42_000,
+            accessState: .allowed
+        )
+        let disabled = ThreadAttachment(
+            id: "attachment-disabled",
+            filename: "draft.pdf",
+            contentType: "application/pdf",
+            byteSize: 12_000,
+            accessState: .downloadDisabled(reason: "Attachment is still processing.")
+        )
+        let hidden = ThreadAttachment(
+            id: "attachment-hidden",
+            filename: "hidden.pdf",
+            contentType: "application/pdf",
+            byteSize: 10_000,
+            accessState: .notVisible
+        )
+
+        #expect(allowed.accessoryTitle == "Download")
+        #expect(allowed.isDownloadEnabled)
+        #expect(disabled.accessoryTitle == "Download unavailable")
+        #expect(!disabled.isDownloadEnabled)
+        #expect(hidden.accessoryTitle == "Hidden")
+        #expect(!hidden.isDownloadEnabled)
+        #expect([allowed, disabled, hidden].visibleToUser.map(\.id) == ["attachment-allowed", "attachment-disabled"])
+    }
+
+    @Test
     func keepsRestrictedThreadsOfflineWhenLocked() async throws {
         let conversation = ConversationSummary(
             id: "restricted-thread",
@@ -53,6 +86,15 @@ struct ConversationThreadViewModelTests {
             senderDisplayName: "Amina",
             senderKind: .member,
             body: "Initial message",
+            attachments: [
+                ThreadAttachment(
+                    id: "attachment-1",
+                    filename: "policy.pdf",
+                    contentType: "application/pdf",
+                    byteSize: 42_000,
+                    accessState: .allowed
+                ),
+            ],
             createdAt: Date(timeIntervalSince1970: 100)
         )
         let appendedMessage = ThreadMessage(
@@ -91,5 +133,6 @@ struct ConversationThreadViewModelTests {
 
         #expect(viewModel.connectionId == "test-connection")
         #expect(viewModel.thread?.items.map(\.id) == ["message-1", "event-1", "message-2"])
+        #expect(viewModel.thread?.items.compactMap(\.message).first?.attachments.first?.accessoryTitle == "Download")
     }
 }

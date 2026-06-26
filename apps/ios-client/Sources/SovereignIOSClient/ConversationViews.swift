@@ -237,9 +237,35 @@ public struct ConversationThreadView: View {
 
             Text(message.body)
                 .font(.body)
+
+            ForEach(message.attachments) { attachment in
+                attachmentRow(attachment)
+            }
         }
         .padding()
         .background(Color.secondary.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    @ViewBuilder
+    private func attachmentRow(_ attachment: ThreadAttachment) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: attachment.isDownloadEnabled ? "paperclip" : "lock.doc")
+                .foregroundStyle(attachment.isDownloadEnabled ? Color.accentColor : Color.secondary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(attachment.filename)
+                    .font(.footnote.weight(.semibold))
+                if let detail = attachment.stateDetail {
+                    Text(detail)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            Spacer()
+            Text(attachment.accessoryTitle)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(attachment.isDownloadEnabled ? Color.accentColor : Color.secondary)
+        }
+        .padding(.top, 6)
     }
 
     @ViewBuilder
