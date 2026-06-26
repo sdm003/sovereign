@@ -175,7 +175,9 @@ export class InvitationAuthService {
     const authContext: AuthContext = {
       tenantId: invitation.tenantId,
       officeId: invitation.officeId,
+      userId: invitation.userId,
       role: invitation.role,
+      membershipStatus: 'active',
     };
 
     const session = await this.sessionIssuer.issueSession({

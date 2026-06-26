@@ -65,7 +65,9 @@ test('completes auth for a valid invitation and returns a session payload', asyn
     authContext: {
       tenantId: 'tenant-1',
       officeId: 'office-1',
+      userId: 'user-1',
       role: 'member',
+      membershipStatus: 'active',
     },
   });
   const stored = repository.list()[0];

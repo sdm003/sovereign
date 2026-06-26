@@ -5,6 +5,12 @@ export type AuthRole =
   | 'restricted_member'
   | 'guest';
 
+export type MembershipStatus =
+  | 'pending'
+  | 'active'
+  | 'suspended'
+  | 'removed';
+
 export type InvitationStatus =
   | 'pending'
   | 'completed'
@@ -19,7 +25,9 @@ export type DeviceMetadata = {
 export type AuthContext = {
   tenantId: string;
   officeId: string;
+  userId: string;
   role: AuthRole;
+  membershipStatus: MembershipStatus;
 };
 
 export type IssueInvitationRequest = {
