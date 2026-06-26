@@ -13,6 +13,9 @@ test('covers the required governance domains in the audit taxonomy', () => {
   assert.deepEqual(auditEventTypes, [
     'auth.invitation_issued',
     'auth.session_issued',
+    'device.enrolled',
+    'device.approved',
+    'device.revoked',
     'membership.created',
     'membership.status_changed',
     'guest.identity_created',

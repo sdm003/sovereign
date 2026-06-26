@@ -1,6 +1,9 @@
 export const auditEventTypes = [
   'auth.invitation_issued',
   'auth.session_issued',
+  'device.enrolled',
+  'device.approved',
+  'device.revoked',
   'membership.created',
   'membership.status_changed',
   'guest.identity_created',
