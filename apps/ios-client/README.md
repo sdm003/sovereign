@@ -1,17 +1,18 @@
 # iOS Client
 
-This path is reserved for the SwiftUI end-user application.
+Swift package baseline for the end-user SwiftUI client surface.
 
-V1 responsibilities:
+Current scope:
 
-- invitation completion handoff on iOS
-- conversation list and thread UX
-- tier visibility and Restricted re-entry UX
-- guest-scoped participant and thread presentation
+- conversation list and thread views
+- tier badge and participant summary presentation
+- restricted locked-state and re-entry messaging
+- realtime message and timeline event handling in the thread view model
+- preview fixtures and package tests for the initial messaging experience
+
+Not yet included:
+
+- Xcode app shell and navigation composition
+- real API transport, auth storage, and websocket wiring
+- attachment upload/download UX
 - bilateral dissolution end-user flows
-
-Out of scope for this bootstrap issue:
-
-- Xcode project initialization
-- dependency setup
-- feature implementation
