@@ -13,3 +13,9 @@ V1 responsibilities:
 - realtime delivery orchestration
 
 The backend remains the source of truth for policy-sensitive decisions.
+
+Runtime baseline artifacts introduced during bootstrap:
+
+- `.env.example`
+- `src/runtime/runtime-config.ts`
+- `src/runtime/runtime-schema.ts`
