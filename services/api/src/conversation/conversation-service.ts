@@ -96,6 +96,14 @@ type RestrictedAccessGuard = {
   }) => Promise<void>;
 };
 
+type GuestAccessGuard = {
+  canAccessConversation: (input: {
+    tenantId: string;
+    guestUserId: string;
+    conversationId: string;
+  }) => Promise<boolean>;
+};
+
 type ListInput = {
   tenantId: string;
   userId: string;
@@ -118,6 +126,9 @@ export class ConversationService {
     private readonly tenancyRepository: TenancyRepository,
     private readonly restrictedAccessGuard: RestrictedAccessGuard = {
       assertRestrictedAccess: async () => undefined,
+    },
+    private readonly guestAccessGuard: GuestAccessGuard = {
+      canAccessConversation: async () => true,
     },
     private readonly clock: Clock = defaultClock,
   ) {}
@@ -193,7 +204,20 @@ export class ConversationService {
 
     for (const conversation of conversations) {
       const participants = await this.repository.getParticipants(conversation.id);
-      if (participants.some((participant) => participant.userId === input.userId)) {
+      const requestingParticipant = participants.find(
+        (participant) => participant.userId === input.userId,
+      );
+      if (requestingParticipant) {
+        if (
+          requestingParticipant.role === 'guest' &&
+          !(await this.guestAccessGuard.canAccessConversation({
+            tenantId: conversation.tenantId,
+            guestUserId: input.userId,
+            conversationId: conversation.id,
+          }))
+        ) {
+          continue;
+        }
         if (conversation.tier === 'restricted') {
           try {
             await this.restrictedAccessGuard.assertRestrictedAccess({
@@ -206,7 +230,15 @@ export class ConversationService {
             continue;
           }
         }
-        visible.push(this.toResponse(conversation, participants));
+        visible.push(
+          this.toResponse(
+            conversation,
+            this.filterVisibleParticipantsForRequester(
+              requestingParticipant,
+              participants,
+            ),
+          ),
+        );
       }
     }
 
@@ -223,10 +255,27 @@ export class ConversationService {
     }
 
     const participants = await this.repository.getParticipants(conversation.id);
-    if (!participants.some((participant) => participant.userId === input.userId)) {
+    const requestingParticipant = participants.find(
+      (participant) => participant.userId === input.userId,
+    );
+    if (!requestingParticipant) {
       throw new ConversationPolicyError(
         'CONVERSATION_ACCESS_DENIED',
         'User is not a participant in this conversation.',
+      );
+    }
+
+    if (
+      requestingParticipant.role === 'guest' &&
+      !(await this.guestAccessGuard.canAccessConversation({
+        tenantId: conversation.tenantId,
+        guestUserId: input.userId,
+        conversationId: conversation.id,
+      }))
+    ) {
+      throw new ConversationPolicyError(
+        'CONVERSATION_ACCESS_DENIED',
+        'Guest access is limited to explicitly granted conversations.',
       );
     }
 
@@ -237,7 +286,13 @@ export class ConversationService {
       conversationTier: conversation.tier,
     });
 
-    return this.toResponse(conversation, participants);
+    return this.toResponse(
+      conversation,
+      this.filterVisibleParticipantsForRequester(
+        requestingParticipant,
+        participants,
+      ),
+    );
   }
 
   async addParticipant(
@@ -384,6 +439,19 @@ export class ConversationService {
       createdBy: conversation.createdBy,
       participantIds: participants.map((participant) => participant.userId),
     };
+  }
+
+  private filterVisibleParticipantsForRequester(
+    requester: ConversationParticipant,
+    participants: ConversationParticipant[],
+  ): ConversationParticipant[] {
+    if (requester.role !== 'guest') {
+      return participants;
+    }
+
+    return participants.filter(
+      (participant) => participant.userId === requester.userId,
+    );
   }
 }
 

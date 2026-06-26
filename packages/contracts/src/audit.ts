@@ -12,6 +12,7 @@ export const auditEventTypes = [
   'membership.status_changed',
   'guest.identity_created',
   'guest.scope_granted',
+  'guest.scope_revoked',
   'file.upload_intent_created',
   'file.download_authorized',
   'tier.conversation_tier_changed',

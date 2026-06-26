@@ -22,6 +22,8 @@ Runtime baseline artifacts introduced during bootstrap:
 - `src/audit/audit-schema.ts`
 - `src/device/device-service.ts`
 - `src/device/device-schema.ts`
+- `src/guest/guest-service.ts`
+- `src/guest/guest-schema.ts`
 - `src/recovery/recovery-service.ts`
 - `src/recovery/recovery-schema.ts`
 - `src/realtime/realtime-service.ts`

@@ -2,6 +2,7 @@ export * from './auth';
 export * from './audit';
 export * from './conversation';
 export * from './device';
+export * from './guest';
 export * from './onboarding';
 export * from './recovery';
 export * from './realtime';
