@@ -1,0 +1,14 @@
+{
+  "name": "sovereign",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/admin-console",
+    "services/api",
+    "packages/contracts",
+    "packages/ui-admin"
+  ],
+  "scripts": {
+    "check:structure": "node scripts/check-structure.mjs"
+  }
+}

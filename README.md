@@ -38,3 +38,30 @@ Repository workflow standards live in:
 - `.github/ISSUE_TEMPLATE/`
 
 The working convention for bootstrap and product delivery is one Linear issue per branch and, when feasible, one PR and one primary commit per completed issue.
+
+## Monorepo layout
+
+```txt
+apps/
+  ios-client/
+  admin-console/
+services/
+  api/
+packages/
+  contracts/
+  ui-admin/
+infra/
+doc/
+scripts/
+```
+
+Bootstrap notes:
+
+- `apps/ios-client` is reserved for the SwiftUI end-user client
+- `apps/admin-console` is reserved for the Next.js admin surface
+- `services/api` is reserved for the NestJS backend
+- `packages/contracts` is reserved for backend-owned shared contracts
+- `packages/ui-admin` is reserved for reusable admin-only UI building blocks
+- `infra` is reserved for SaaS runtime and operational assets
+
+Framework-specific deep setup is intentionally deferred to downstream issues. For this bootstrap phase, the repository only establishes stable paths, minimal manifests, and ownership documentation.
