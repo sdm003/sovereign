@@ -27,6 +27,7 @@ export const auditEventTypes = [
   'recovery.sim_verified',
   'recovery.completed',
   'support.elevation_requested',
+  'support.elevation_granted',
   'support.elevation_revoked',
 ] as const;
 

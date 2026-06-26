@@ -9,4 +9,5 @@ export * from './onboarding';
 export * from './recovery';
 export * from './realtime';
 export * from './restricted';
+export * from './support';
 export * from './tenancy';

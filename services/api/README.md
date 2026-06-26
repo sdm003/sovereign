@@ -9,6 +9,7 @@ V1 responsibilities:
 - conversation, participant, and message policy enforcement
 - audit persistence and review APIs
 - restricted-session and recovery workflows
+- controlled support-elevation workflow
 - bilateral dissolution workflow
 - signed attachment authorization and access-state enforcement
 - realtime delivery orchestration
@@ -37,3 +38,5 @@ Runtime baseline artifacts introduced during bootstrap:
 - `src/restricted/restricted-access-schema.ts`
 - `src/runtime/runtime-config.ts`
 - `src/runtime/runtime-schema.ts`
+- `src/support/support-elevation-service.ts`
+- `src/support/support-elevation-schema.ts`

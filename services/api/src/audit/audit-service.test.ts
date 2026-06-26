@@ -39,6 +39,7 @@ test('covers the required governance domains in the audit taxonomy', () => {
     'recovery.sim_verified',
     'recovery.completed',
     'support.elevation_requested',
+    'support.elevation_granted',
     'support.elevation_revoked',
   ]);
 });
